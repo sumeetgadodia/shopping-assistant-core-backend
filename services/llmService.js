@@ -68,8 +68,15 @@ const callLLM = async (prompt, model, expectJson = true) => {
         console.error(`[LLM Error - ${model}]:`, e.message);
         
         // Return safe fallback objects so the pipeline doesn't crash
-        if (prompt.includes("Layer 0")) {
-            return { broad_type: "sales", exact_intent: "recommendation", sentiment: "neutral" };
+        if (prompt.includes("intent classification layer")) {
+            return {
+                primary_bucket: "sales",
+                sub_bucket: "recommendation_styling",
+                journey_stage: "pre_purchase",
+                confidence: 0.6,
+                needs_human_review: false,
+                reason: "Fallback router classification"
+            };
         }
         return { 
             reply_text: "I'm experiencing a temporary issue. Let me connect you to an agent.",
