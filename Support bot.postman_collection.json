@@ -1,0 +1,633 @@
+{
+  "info": {
+    "_postman_id": "860db465-401b-4971-a32b-1959b801b645",
+    "name": "Support bot",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "25265045"
+  },
+  "item": [
+    {
+      "name": "Support — first WISMO, delayed order, no tracking",
+      "request": {
+        "auth": {
+          "type": "noauth"
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_001\",\n  \"message\": \"Where is my order?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree with Embroidered Blouse\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"shipping_email\": \"customer@example.com\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree with Embroidered Blouse\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree with Embroidered Blouse\",\n            \"image_url\": \"https://static3.azafashions.com/tr:w-200/uploads/product_gallery/1771064916507_1.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"\",\n            \"inward_status\": \"\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Normal WISMO — future ship date, no FS",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_future_001\",\n  \"message\": \"Where is my order?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_future_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [\n      {\n        \"order_id\": 725410,\n        \"sub_order_id\": 1365592,\n        \"customer_order_no\": \"EYOCHF25\",\n        \"product_title\": \"Embroidered Lehenga Set\",\n        \"designer_name\": \"Aza Designer\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-05-14\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-25\",\n        \"expected_delivery_date\": \"2026-05-30\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Embroidered Lehenga Set\",\n            \"product_title\": \"Embroidered Lehenga Set\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Tracking available",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_tracking_001\",\n  \"message\": \"Please share tracking link\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_tracking_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [\n      {\n        \"order_id\": 725411,\n        \"sub_order_id\": 1365593,\n        \"customer_order_no\": \"EYOCHF26\",\n        \"product_title\": \"Printed Saree\",\n        \"designer_name\": \"Aza Designer\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-05-10\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"SHIPPED\",\n        \"console_status\": \"SHIPPED\",\n        \"status\": \"Your order has been shipped.\",\n        \"expected_shipping_date\": \"2026-05-14\",\n        \"expected_delivery_date\": \"2026-05-18\",\n        \"tracking_link\": \"https://track.example.com/AWB123\",\n        \"shipment_history\": [\n          {\n            \"tracking_id\": \"AWB123\",\n            \"shipping_company_name\": \"Blue Dart\",\n            \"status\": \"Shipped\",\n            \"tracking_status\": \"In Transit\",\n            \"description\": \"Shipment picked up\",\n            \"status_date\": \"2026-05-15T10:00:00+05:30\"\n          }\n        ],\n        \"refund_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Printed Saree\",\n            \"product_title\": \"Printed Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"RTS\",\n            \"inward_status\": \"Processed\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "No active order found",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_no_order_001\",\n  \"message\": \"Where is my order?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_no_order_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Existing FS — customer asks update within 24 hours",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_fs_24h_001\",\n  \"message\": \"Any update?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_fs_24h_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"agent\",\n        \"message\": \"Your order EYOCHF24 is taking longer than expected. We’ve shared this for a priority check and will update you once we receive a confirmed ETA.\",\n        \"datetime\": \"2026-05-16T10:00:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"FS123\",\n      \"status\": \"Open\",\n      \"threads\": [\n        {\n          \"from\": \"freshservice\",\n          \"datetime\": \"2026-05-16T10:30:00+05:30\",\n          \"message\": \"Checking with team.\"\n        }\n      ]\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Existing FS — no update for more than 24 hours",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_fs_old_001\",\n  \"message\": \"Any update?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_fs_old_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"agent\",\n        \"message\": \"Your order EYOCHF24 is taking longer than expected. We’ve shared this for a priority check and will update you once we receive a confirmed ETA.\",\n        \"datetime\": \"2026-05-14T10:00:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"FS123\",\n      \"status\": \"Open\",\n      \"threads\": [\n        {\n          \"from\": \"freshservice\",\n          \"datetime\": \"2026-05-14T10:30:00+05:30\",\n          \"message\": \"Checking with team.\"\n        }\n      ]\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Existing FS has confirmed customer-facing update",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_fs_update_001\",\n  \"message\": \"Any update?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_fs_update_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"agent\",\n        \"message\": \"Your order EYOCHF24 is taking longer than expected. We’ve shared this for a priority check and will update you once we receive a confirmed ETA.\",\n        \"datetime\": \"2026-05-15T10:00:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"FS123\",\n      \"status\": \"In Progress\",\n      \"threads\": [\n        {\n          \"from\": \"freshservice\",\n          \"datetime\": \"2026-05-16T12:00:00+05:30\",\n          \"message\": \"Confirmed customer-facing update: order will be dispatched by 18 May.\"\n        }\n      ]\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Human only / live agent",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_human_001\",\n  \"message\": \"I want to talk to a human agent\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_human_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Human + order status",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_human_order_001\",\n  \"message\": \"I want to talk to a human, where is my order?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_human_order_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Product issue / damaged item, proof not shared",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_product_issue_no_proof_001\",\n  \"message\": \"The saree I received is damaged. Please return it.\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_product_issue_no_proof_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"DELIVERED\",\n        \"console_status\": \"DELIVERED\",\n        \"status\": \"Your order has been delivered.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [\n          {\n            \"tracking_id\": \"AWB123\",\n            \"shipping_company_name\": \"Blue Dart\",\n            \"status\": \"Delivered\",\n            \"tracking_status\": \"Delivered\",\n            \"description\": \"Shipment delivered\",\n            \"status_date\": \"2026-05-10T14:00:00+05:30\"\n          }\n        ],\n        \"refund_status\": \"\",\n        \"return_status\": \"\",\n        \"return_eligibility\": \"Returnexchange eligible\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Processed\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Product issue / proof already shared",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_product_issue_proof_shared_001\",\n  \"message\": \"I have uploaded the damaged product images. Please check and process the return.\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_product_issue_proof_shared_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"customer\",\n        \"message\": \"The saree I received is damaged. Please return it.\",\n        \"datetime\": \"2026-05-17T10:00:00+05:30\"\n      },\n      {\n        \"from\": \"agent\",\n        \"message\": \"Please share 2-3 clear images of the damage and the product packaging.\",\n        \"datetime\": \"2026-05-17T10:01:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"DELIVERED\",\n        \"console_status\": \"DELIVERED\",\n        \"status\": \"Your order has been delivered.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [\n          {\n            \"tracking_id\": \"AWB123\",\n            \"shipping_company_name\": \"Blue Dart\",\n            \"status\": \"Delivered\",\n            \"tracking_status\": \"Delivered\",\n            \"description\": \"Shipment delivered\",\n            \"status_date\": \"2026-05-10T14:00:00+05:30\"\n          }\n        ],\n        \"refund_status\": \"\",\n        \"return_status\": \"\",\n        \"return_eligibility\": \"Returnexchange eligible\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Processed\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Return not eligible — first clear ask",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_return_not_eligible_001\",\n  \"message\": \"I want to return this saree.\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_return_not_eligible_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"DELIVERED\",\n        \"console_status\": \"DELIVERED\",\n        \"status\": \"Your order has been delivered.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [\n          {\n            \"tracking_id\": \"AWB123\",\n            \"shipping_company_name\": \"Blue Dart\",\n            \"status\": \"Delivered\",\n            \"tracking_status\": \"Delivered\",\n            \"description\": \"Shipment delivered\",\n            \"status_date\": \"2026-05-10T14:00:00+05:30\"\n          }\n        ],\n        \"refund_status\": \"\",\n        \"return_status\": \"\",\n        \"return_eligibility\": \"Not eligible for return/exchange\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Processed\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Return not eligible — customer pushes again",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_return_not_eligible_pushback_001\",\n  \"message\": \"But I still want to return it. Please check again.\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_return_not_eligible_pushback_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"customer\",\n        \"message\": \"I want to return this saree.\",\n        \"datetime\": \"2026-05-17T11:00:00+05:30\"\n      },\n      {\n        \"from\": \"agent\",\n        \"message\": \"This item is not eligible for return or exchange as per the order policy.\",\n        \"datetime\": \"2026-05-17T11:01:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"DELIVERED\",\n        \"console_status\": \"DELIVERED\",\n        \"status\": \"Your order has been delivered.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [\n          {\n            \"tracking_id\": \"AWB123\",\n            \"shipping_company_name\": \"Blue Dart\",\n            \"status\": \"Delivered\",\n            \"tracking_status\": \"Delivered\",\n            \"description\": \"Shipment delivered\",\n            \"status_date\": \"2026-05-10T14:00:00+05:30\"\n          }\n        ],\n        \"refund_status\": \"\",\n        \"return_status\": \"\",\n        \"return_eligibility\": \"Not eligible for return/exchange\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Processed\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Cancellation contradiction / customer says cancellation was already approved",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_cancellation_contradiction_001\",\n  \"message\": \"But your team already told me my cancellation was approved. Why is the order still processing?\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_cancellation_contradiction_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"customer\",\n        \"message\": \"Please cancel my order.\",\n        \"datetime\": \"2026-05-15T10:00:00+05:30\"\n      },\n      {\n        \"from\": \"agent\",\n        \"message\": \"We have received your cancellation request and our team will check this.\",\n        \"datetime\": \"2026-05-15T10:05:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-25\",\n        \"expected_delivery_date\": \"2026-05-30\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Thanks / no action",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_support_thanks_001\",\n  \"message\": \"Thanks, I will wait.\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_support_thanks_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [\n      {\n        \"from\": \"customer\",\n        \"message\": \"Where is my order?\",\n        \"datetime\": \"2026-05-17T09:00:00+05:30\"\n      },\n      {\n        \"from\": \"agent\",\n        \"message\": \"Your order EYOCHF24 is taking longer than expected. I’ve shared this for a priority check and we’ll update you once confirmed.\",\n        \"datetime\": \"2026-05-17T09:01:00+05:30\"\n      }\n    ],\n    \"active_orders\": [\n      {\n        \"order_id\": 725409,\n        \"sub_order_id\": 1365591,\n        \"customer_order_no\": \"EYOCHF24\",\n        \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n        \"designer_name\": \"ISADAA BY ROTNA DUTT\",\n        \"size\": \"M\",\n        \"created_at\": \"2026-04-28\",\n        \"shipping_country\": \"India\",\n        \"customer_status\": \"PROCESSING\",\n        \"console_status\": \"PROCESSING\",\n        \"status\": \"Your order is processing.\",\n        \"expected_shipping_date\": \"2026-05-06\",\n        \"expected_delivery_date\": \"2026-05-10\",\n        \"tracking_link\": \"\",\n        \"shipment_history\": [],\n        \"refund_status\": \"\",\n        \"return_status\": \"\",\n        \"return_eligibility\": \"\",\n        \"phone\": \"+91-9044097007\",\n        \"products\": [\n          {\n            \"name\": \"Chanderi Silk Pre-Draped Saree\",\n            \"product_title\": \"Chanderi Silk Pre-Draped Saree\",\n            \"image_url\": \"https://static3.azafashions.com/sample.jpg\",\n            \"price\": \"\",\n            \"stock_type\": \"MTO\",\n            \"inward_status\": \"Pending\"\n          }\n        ]\n      }\n    ],\n    \"freshservice\": {\n      \"ticket_id\": \"FS123\",\n      \"status\": \"Open\",\n      \"threads\": [\n        {\n          \"from\": \"freshservice\",\n          \"message\": \"Internal note: shared with Merchandise for ETA check.\",\n          \"datetime\": \"2026-05-17T09:05:00+05:30\"\n        }\n      ]\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Greeting only — no LLM",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_standard_hi_001\",\n  \"message\": \"hi\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_standard_hi_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Thanks - no llm",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_standard_thanks_001\",\n  \"message\": \"thanks\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_standard_thanks_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Thanks in support context — no LLM, reply null",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "New chat greeting variation — should call router + greeting LLM",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"chat_id\": \"chat_greeting_llm_hey_there_001\",\n  \"message\": \"hey there\",\n  \"user_id\": \"u123\",\n  \"channel_data\": {\n    \"chat_id\": \"chat_greeting_llm_hey_there_001\",\n    \"channel\": \"web\",\n    \"country\": \"India\",\n    \"chat_thread\": [],\n    \"active_orders\": [],\n    \"freshservice\": {\n      \"ticket_id\": \"\",\n      \"status\": \"\",\n      \"threads\": []\n    }\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/api/chat",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "api",
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
