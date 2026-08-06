@@ -6,6 +6,9 @@ const { validateResponse } = require('./validationService');
 const CONFIDENCE = new Set(['high', 'medium', 'low']);
 const SORT_HINTS = new Set(['relevance', 'price_low_to_high', 'price_high_to_low', 'newest', 'fastest_delivery', 'premium_first']);
 const RESULT_STRATEGIES = new Set(['narrow_exact', 'balanced_curated', 'broad_preview']);
+const CONTROL_ANSWERS = new Set([
+    'no preference', 'show all', 'any color', 'any colour', 'no budget limit', 'no rush'
+]);
 
 const asShortText = (value, max = 160) => typeof value === 'string' ? value.trim().slice(0, max) : '';
 
@@ -120,10 +123,18 @@ const validateSalesPayload = (payload = {}, runtime = {}) => {
         reply = replyCheck.safeReply;
     }
 
-    const searchTerm = asShortText(decision?.search_term, 100);
+    let searchTerm = asShortText(decision?.search_term, 100);
+    if (CONTROL_ANSWERS.has(searchTerm.toLowerCase())) {
+        searchTerm = '';
+        errors.push('control_answer_removed_from_search_term');
+    }
     const inferredSearchReady = filters.length > 0 || !!searchTerm;
-    const searchReady = typeof decision?.search_ready === 'boolean' ? decision.search_ready : inferredSearchReady;
+    let searchReady = typeof decision?.search_ready === 'boolean' ? decision.search_ready : inferredSearchReady;
     if (typeof decision?.search_ready !== 'boolean') errors.push('search_ready_normalized');
+    if (searchReady && !inferredSearchReady) {
+        searchReady = false;
+        errors.push('empty_search_marked_not_ready');
+    }
 
     if (!reply) {
         errors.push('missing_reply_replaced');

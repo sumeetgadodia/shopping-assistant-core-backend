@@ -111,28 +111,25 @@ const FAMILY_BANKS = Object.freeze({
 
 const RETAINED_FIRST_BETS = `
 General first-bet guidance:
-- The Sales Core recipient gate controls whether to apply, preview, ask, or omit Gender. Product-family banks never override it.
-- Women-first is limited to an explicit women-dominant adult/child family: Women-only broad_preview, then the binary choice.
-- Materially multi-audience products and broad wedding/wedding-guest, gifting, couple, or family requests ask recipient before retrieval.
-- Audience-neutral accessories skip Gender. Never add a gender filter only to increase filter depth.
-- Never combine multiple audiences in one rack. For multiple recipients, ask which one to start with.
-- Women + Wedding: suitable parent racks are Lehengas, Sarees, Gowns, Kurta Sets, Co-Ord Sets.
-- Women + Festive: suitable parent racks are Lehengas, Sarees, Kurta Sets, Co-Ord Sets, with Anarkali Sets or Sharara Sets only as exact subcategories.
-- Cocktail/reception/night: suitable racks include Gowns, Sarees, Dresses, Lehengas, Co-Ord Sets.
-- Haldi/mehendi/day/summer: suitable racks include Lehengas, Sarees, Kurta Sets, Co-Ord Sets, with Sharara/Anarkali as subcategory paths.
-- Resort/beach/vacation: Dresses, Kaftan Dresses, Co-Ord Sets, Jumpsuits; add Sarees only in an Indian/wedding context.
-- Men/groom/husband: Men + Sherwanis, Kurtas, Bandhgalas, Suits And Tuxedos, Jackets And Sets.
-- Kids generic: ask Girls/Boys. Once rack is known, ask age/size early.
+- Sales Core owns recipient logic; banks never override it. Never mix audiences or globally default Women.
+- Women Wedding/Festive: Lehengas, Sarees, Gowns, Kurta/Co-Ord Sets; Anarkali/Sharara only as exact child paths.
+- Cocktail/reception: Gowns, Sarees, Dresses, Lehengas, Co-Ord Sets. Haldi/mehendi/day: Lehengas, Sarees, Kurta/Co-Ord Sets.
+- Resort: Dresses, Kaftan Dresses, Co-Ord Sets, Jumpsuits; Sarees only with Indian/wedding context. Men/groom: Sherwanis, Kurtas, Bandhgalas, Suits/Tuxedos, Jackets/Sets. Kids: ask Girls/Boys, then age/size.
+- Curate one coherent Aza designer edit, not a catalog dump. Lead with taste/occasion unless urgency is explicit; return the rack plus one purposeful question.
 `;
 
 const REFINEMENT_BANKS = Object.freeze({
+    wedding_moment: ['Wedding ceremony', 'Sangeet', 'Reception', 'Mehendi/Haldi', 'Engagement'],
+    wedding_role: ['Bride', 'Bridesmaid', 'Close family', 'Wedding guest', 'Show all'],
+    look_direction: ['Classic Indian', 'Modern glamour', 'Soft romantic', 'Statement craft', 'Minimal luxe'],
+    statement_level: ['Understated elegance', 'Refined statement', 'High glamour', 'Light and effortless', 'No preference'],
     bridal_budget: ['Under ₹50k', '₹50k–₹1L', '₹1L+', 'No budget limit'],
     wedding_budget: ['Under ₹50k', '₹50k–₹1L', '₹1L–₹2L', 'No budget limit'],
     comfort: ['Light and easy', 'Glam and statement', 'Easy to dance in', 'Modest coverage', 'No preference'],
     delivery: ['Ready to ship', 'Within 1 week', 'Within 2 weeks', 'No rush'],
-    lehenga_color: ['Pink', 'Ivory', 'Red', 'Gold', 'Green', 'No preference'],
-    saree_color: ['Red', 'Gold', 'Pink', 'Ivory', 'Green', 'No preference'],
-    gown_color: ['Black', 'Red', 'Pink', 'Gold', 'Ivory', 'No preference']
+    lehenga_color: ['Pink', 'Ivory', 'Red', 'Gold/Green', 'No preference'],
+    saree_color: ['Red', 'Gold', 'Pink/Ivory', 'Green', 'No preference'],
+    gown_color: ['Black', 'Red', 'Pink', 'Gold/Ivory', 'No preference']
 });
 
 const compactThreadText = (chatThread = []) => (Array.isArray(chatThread) ? chatThread : [])
@@ -140,30 +137,85 @@ const compactThreadText = (chatThread = []) => (Array.isArray(chatThread) ? chat
     .map((turn) => `${turn?.from || ''}: ${turn?.message || ''}`)
     .join('\n');
 
+const stripNegatedFamilyCues = (text = '') => String(text || '').replace(
+    /\b(?:not|no|instead of|rather than|without)\s+(?:an?|the)?\s*(?:sarees?|saris?|lehengas?|lehngas?|gowns?|dresses?|kurtas?|kurta sets?|sherwanis?|bandhgalas?|jewell?ery|bags?|footwear|shoes?|anarkalis?|shararas?|kaftans?|co[- ]?ords?)\b/gi,
+    ' '
+);
+
+const familyKeysForText = (text = '') => Object.entries(FAMILY_BANKS)
+    .filter(([, bank]) => bank.cues.test(stripNegatedFamilyCues(text).replace(/\badd (?:this|it|the item) to (?:my )?bag\b/gi, ' ')))
+    .map(([key]) => key);
+
+const confirmedFamilyText = (salesState = {}) => (Array.isArray(salesState?.confirmed_filters)
+    ? salesState.confirmed_filters
+        .filter((item) => ['level2CategoryName_uFilter', 'level3CategoryNames_uFilter'].includes(item?.facet_name))
+        .flatMap((item) => Array.isArray(item?.values) ? item.values : [])
+    : []).join(' ');
+
 const selectFamilyBanks = ({ query = '', chatThread = [], salesState = {} } = {}) => {
-    const text = [query, compactThreadText(chatThread), salesState?.search_term || ''].join('\n');
-    return Object.entries(FAMILY_BANKS)
-        .filter(([, bank]) => bank.cues.test(text))
-        .slice(0, 3)
-        .map(([key]) => key);
+    const targetMatch = String(query || '').match(/^([\s\S]*?)\b(?:to match|to go with|for this|with this)\b/i);
+    const targetKeys = targetMatch ? familyKeysForText(targetMatch[1]) : [];
+    if (targetKeys.length) return targetKeys.slice(0, 3);
+
+    const currentKeys = familyKeysForText(query);
+    if (currentKeys.length) return currentKeys.slice(0, 3);
+
+    const stateKeys = familyKeysForText(`${salesState?.search_term || ''} ${confirmedFamilyText(salesState)}`);
+    if (stateKeys.length) return stateKeys.slice(0, 3);
+
+    const customerTurns = (Array.isArray(chatThread) ? chatThread : [])
+        .filter((turn) => String(turn?.from || '').toLowerCase() === 'customer')
+        .slice(-4)
+        .reverse();
+    const retained = [];
+    for (const turn of customerTurns) {
+        for (const key of familyKeysForText(turn?.message || '')) {
+            if (!retained.includes(key)) retained.push(key);
+            if (retained.length === 3) return retained;
+        }
+    }
+    return retained;
 };
 
-const selectRefinementBanks = (text = '') => {
+const answeredDimensions = (salesState = {}) => new Set(
+    (Array.isArray(salesState?.answered_dimensions) ? salesState.answered_dimensions : [])
+        .map((value) => String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '_'))
+        .filter(Boolean)
+);
+
+const selectRefinementBanks = (text = '', familyKeys = [], salesState = {}) => {
     const selected = [];
-    if (/\b(bride|bridal)\b/i.test(text)) selected.push('bridal_budget');
-    else if (/\b(wedding|sangeet|reception|engagement|groom)\b/i.test(text)) selected.push('wedding_budget');
-    if (/\b(light|comfort|dance|modest|summer|outdoor|destination|beach)\b/i.test(text)) selected.push('comfort');
-    if (/\b(urgent|ready to ship|rts|deliver|delivery|need .* by|within .*week|tomorrow|asap)\b/i.test(text)) selected.push('delivery');
-    if (/\blehenga\b/i.test(text)) selected.push('lehenga_color');
-    else if (/\bsaree\b/i.test(text)) selected.push('saree_color');
-    else if (/\bgown\b/i.test(text)) selected.push('gown_color');
-    return [...new Set(selected)].slice(0, 3);
+    const answered = answeredDimensions(salesState);
+    const isAnswered = (...dimensions) => dimensions.some((dimension) => answered.has(dimension));
+    const add = (key, ...dimensions) => {
+        if (!isAnswered(key, ...dimensions) && !selected.includes(key)) selected.push(key);
+    };
+    const hasWedding = /\b(wedding|bride|bridal|groom|sangeet|reception|engagement|mehendi|haldi)\b/i.test(text);
+    const hasExactMoment = /\b(sangeet|reception|engagement|mehendi|haldi|wedding ceremony)\b/i.test(text);
+    const hasRole = /\b(bride|bridal|groom|bridesmaid|close family|wedding guest)\b/i.test(text);
+
+    if (hasWedding && !hasExactMoment) add('wedding_moment', 'occasion_moment', 'event_moment');
+    if (hasWedding && !hasRole) add('wedding_role', 'occasion_role', 'wearer_role');
+    if (familyKeys.length) add('look_direction', 'style', 'styling_direction');
+    if (familyKeys.length) add('statement_level', 'mood', 'vibe');
+    if (/\b(light|comfort|dance|modest|summer|outdoor|destination|beach|coverage|easy)\b/i.test(text) || isAnswered('look_direction', 'style')) {
+        add('comfort', 'practicality', 'wearability');
+    }
+    if (/\b(bride|bridal)\b/i.test(text)) add('bridal_budget', 'budget', 'price');
+    else if (hasWedding) add('wedding_budget', 'budget', 'price');
+    if (familyKeys.includes('lehenga')) add('lehenga_color', 'color', 'colour', 'palette');
+    else if (familyKeys.includes('saree')) add('saree_color', 'color', 'colour', 'palette');
+    else if (familyKeys.includes('gown')) add('gown_color', 'color', 'colour', 'palette');
+    if (/\b(urgent|ready to ship|rts|deliver|delivery|need .* by|within .*week|tomorrow|asap)\b/i.test(text)) {
+        add('delivery', 'delivery_timeline', 'shipping_time');
+    }
+    return selected.slice(0, 5);
 };
 
 const buildStylistKnowledge = (input = {}) => {
     const familyKeys = selectFamilyBanks(input);
-    const text = [input?.query || '', compactThreadText(input?.chatThread), input?.salesState?.search_term || ''].join('\n');
-    const refinementKeys = selectRefinementBanks(text);
+    const text = [stripNegatedFamilyCues(input?.query || ''), compactThreadText(input?.chatThread), input?.salesState?.search_term || '', confirmedFamilyText(input?.salesState)].join('\n');
+    const refinementKeys = selectRefinementBanks(text, familyKeys, input?.salesState || {});
     const familyText = familyKeys.length
         ? familyKeys.map((key) => {
             const bank = FAMILY_BANKS[key];
@@ -188,7 +240,9 @@ ${familyText}
 Selected next-refinement banks:
 ${refinementText}
 
-Follow-up options may be customer search phrases. Only exact active facet values can enter filters_to_apply; otherwise wait for selection and use a grounded search_term.
+Question-bank rules:
+- Banks are choices, not a checklist: ask one highest-impact unanswered question, then move on next turn. Do not stop because filters are known.
+- With focused runtime products, prefer a grounded comparison/selection question. Options may be search phrases; only exact active values enter filters, otherwise use grounded search_term after selection.
 `
     };
 };

@@ -20,11 +20,14 @@ const INTENT_MODULES = Object.freeze({
 const BASE_FACETS = [
     'audience_uFilter',
     'level2CategoryName_uFilter',
+    'price'
+];
+
+const EXPLICIT_OR_CONFIRMED_FACETS = [
     'level3CategoryNames_uFilter',
     'baseColor_uFilter',
     'shopByOccassion_uFilter',
-    'classificationTag_uFilter',
-    'price'
+    'classificationTag_uFilter'
 ];
 
 const OPTIONAL_MATCH_FACETS = [
@@ -41,7 +44,8 @@ const OPTIONAL_MATCH_FACETS = [
 
 const SIZE_FACETS = new Set([
     'size_uFilter', 'rtsSize_uFilter', 'rtsSizeRow_uFilter', 'rtsSizeUsa_uFilter',
-    'discountSize_uFilter', 'discountSizeUsa_uFilter', 'discountSizeRow_uFilter'
+    'warehouseSizeUsa_uFilter', 'discountSize_uFilter', 'discountSizeUsa_uFilter',
+    'discountSizeRow_uFilter'
 ]);
 
 const AMBIGUOUS_DESIGNERS = new Set([
@@ -66,31 +70,43 @@ const combinedText = ({ query = '', chatThread = [], salesState = {} } = {}) => 
     return [query, ...turns, ...stateText].join('\n');
 };
 
-const phrasePresent = (text, phrase) => {
-    const haystack = ` ${normalize(text)} `;
-    const needle = normalize(phrase);
-    return !!needle && haystack.includes(` ${needle} `);
-};
-
 const matchedValues = (facetName, text) => {
     const facet = catalog[facetName];
     if (!facet) return [];
     const designerCue = /\b(designer|brand|label|by)\b/i.test(text);
     const seen = new Set();
+    const paddedText = ` ${normalize(text)} `;
+    const selectedSpans = [];
+    const matches = [];
+    const limit = facetName === 'designerName_uFilter' ? 5 : 12;
 
-    return [...facet.values]
-        .sort((a, b) => b.length - a.length)
-        .filter((value) => {
-            const key = normalize(value);
-            if (!phrasePresent(text, value) || seen.has(key)) return false;
-            if (facetName === 'designerName_uFilter' && AMBIGUOUS_DESIGNERS.has(key)) {
-                const exactQuery = normalize(text) === key;
-                if (!designerCue && !exactQuery) return false;
-            }
-            seen.add(key);
-            return true;
-        })
-        .slice(0, facetName === 'designerName_uFilter' ? 5 : 12);
+    for (const value of [...facet.values].sort((a, b) => b.length - a.length)) {
+        const key = normalize(value);
+        if (!key || seen.has(key)) continue;
+        if (facetName === 'designerName_uFilter' && AMBIGUOUS_DESIGNERS.has(key)) {
+            const exactQuery = normalize(text) === key;
+            if (!designerCue && !exactQuery) continue;
+        }
+
+        const needle = ` ${key} `;
+        const spans = [];
+        let start = paddedText.indexOf(needle);
+        while (start >= 0) {
+            spans.push([start + 1, start + needle.length - 1]);
+            start = paddedText.indexOf(needle, start + 1);
+        }
+        const independentSpans = spans.filter(([spanStart, spanEnd]) => !selectedSpans.some(
+            ([selectedStart, selectedEnd]) => spanStart >= selectedStart && spanEnd <= selectedEnd
+        ));
+        if (!independentSpans.length) continue;
+
+        seen.add(key);
+        selectedSpans.push(...independentSpans);
+        matches.push(value);
+        if (matches.length >= limit) break;
+    }
+
+    return matches;
 };
 
 const countryBucket = (country = '') => {
@@ -100,12 +116,30 @@ const countryBucket = (country = '') => {
     return 'row';
 };
 
-const hasSizeSignal = (text = '') => /\b(size|fit|measurements?|xxs|xs|s|m|l|xl|xxl|[3-6]xl|free size|\d{1,2}-\d{1,2} y|\d{1,2}-\d{1,2} m)\b/i.test(text);
-const hasRtsSignal = (text = '') => /\b(ready[- ]?to[- ]?ship|rts|urgent|asap|need (?:it )?soon|fast(?:est)? delivery|deliver(?:y)? by|need .* by|tomorrow|within \d+ weeks?)\b/i.test(text);
-const hasDiscountSignal = (text = '') => /\b(discount|discounted|sale|offer|best price)\b/i.test(text);
-const hasDeliverySignal = (text = '') => hasRtsSignal(text) || /\b(deliver|delivery|shipping time|arrive|arrival|ship by)\b/i.test(text);
+const hasSizeSignal = (text = '') => {
+    const value = String(text || '');
+    return /\b(size|fit|measurements?|xxs|xs|xl|xxl|[3-6]xl|free size|\d{1,2}-\d{1,2} y|\d{1,2}-\d{1,2} m)\b/i.test(value) ||
+        /\b(?:size|in)\s+(?:s|m|l)\b/i.test(value) ||
+        /(?:^|[\s,(])(?:S|M|L)(?=$|[\s,.)])/g.test(value);
+};
 
-const sizeFacetFor = (bucket, rts, discount) => {
+const hasRtsSignal = (text = '') => {
+    const value = String(text || '');
+    const explicitDelivery = /\b(ready[- ]?to[- ]?ship|rts|urgent|asap|need (?:it )?soon|fast(?:est)? delivery|deliver(?:y)? by|arrive by|arrival by|tomorrow|within \d+ weeks?)\b/i.test(value);
+    const datedNeed = /\bneed\b.{0,60}\bby\s+(?=(?:today|tonight|tomorrow|this|next|mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|\d))/i.test(value);
+    return explicitDelivery || datedNeed;
+};
+const hasDiscountSignal = (text = '') => /\b(discount|discounted|sale|offer|best price)\b/i.test(text);
+const hasDeliverySignal = (text = '') => hasRtsSignal(text) || /\b(deliver|delivery|shipping time|arrive|arrival|ship by|can (?:it|this) (?:reach|arrive)|will (?:it|this) (?:reach|arrive))\b/i.test(text);
+const hasUsaWarehouseSignal = (text = '') => {
+    const value = String(text || '');
+    return /\b(?:us|usa|united states)\s+(?:warehouse|stock|inventory)\b/i.test(value) ||
+        /\b(?:warehouse|stock|inventory)\s+in\s+(?:the\s+)?(?:us|usa|united states)\b/i.test(value) ||
+        /\bships?\s+from\s+(?:the\s+)?(?:us|usa|united states)\b/i.test(value);
+};
+
+const sizeFacetFor = (bucket, rts, discount, usaWarehouse) => {
+    if (usaWarehouse) return 'warehouseSizeUsa_uFilter';
     if (rts) return bucket === 'usa' ? 'rtsSizeUsa_uFilter' : bucket === 'row' ? 'rtsSizeRow_uFilter' : 'rtsSize_uFilter';
     if (discount) return bucket === 'usa' ? 'discountSizeUsa_uFilter' : bucket === 'row' ? 'discountSizeRow_uFilter' : 'discountSize_uFilter';
     return 'size_uFilter';
@@ -146,11 +180,25 @@ const renderFacet = (facetName, narrowedValues = null) => {
 const selectActiveFacets = ({ query = '', chatThread = [], salesState = {}, country = '', subBucket = 'unclear' } = {}) => {
     const text = combinedText({ query, chatThread, salesState });
     const bucket = countryBucket(country);
-    const selected = new Map(BASE_FACETS.map((facetName) => [facetName, null]));
     const confirmed = confirmedFacetValues(salesState);
+    const selected = new Map(BASE_FACETS.map((facetName) => {
+        if (catalog[facetName].dynamic_numeric_range) return [facetName, null];
+        const currentValues = matchedValues(facetName, query);
+        const retainedValues = confirmed.get(facetName) || [];
+        return [facetName, currentValues.length ? currentValues : (retainedValues.length ? retainedValues : null)];
+    }));
+    EXPLICIT_OR_CONFIRMED_FACETS.forEach((facetName) => {
+        const currentValues = matchedValues(facetName, query);
+        const retainedValues = confirmed.get(facetName) || [];
+        const values = currentValues.length ? currentValues : retainedValues;
+        if (values.length) selected.set(facetName, values);
+    });
     const confirmedQuick = confirmed.get('quickFilters_uFilter') || [];
     const rejectsRts = /\b(no rush|not urgent|do not need ready[- ]?to[- ]?ship|dont need ready[- ]?to[- ]?ship)\b/i.test(query);
     const rejectsDiscount = /\b(not on sale|no sale|without discount|do not need (?:a )?discount|dont need (?:a )?discount)\b/i.test(query);
+    const rejectsUsaWarehouse = /\b(?:not|no need|do not need|dont need).{0,24}(?:us|usa|united states)\s+warehouse\b/i.test(query);
+    const confirmedUsaWarehouse = confirmed.has('warehouseSizeUsa_uFilter');
+    const usaWarehouse = !rejectsUsaWarehouse && (hasUsaWarehouseSignal(text) || confirmedUsaWarehouse);
     const rts = !rejectsRts && (
         hasRtsSignal(text) ||
         subBucket === 'pre_purchase_delivery' ||
@@ -170,6 +218,7 @@ const selectActiveFacets = ({ query = '', chatThread = [], salesState = {}, coun
     confirmed.forEach((values, facetName) => {
         if (
             !BASE_FACETS.includes(facetName) &&
+            !EXPLICIT_OR_CONFIRMED_FACETS.includes(facetName) &&
             !SIZE_FACETS.has(facetName) &&
             !['quickFilters_uFilter', 'estimatedDeliveryWeek_uFilter'].includes(facetName)
         ) selected.set(facetName, values);
@@ -179,7 +228,7 @@ const selectActiveFacets = ({ query = '', chatThread = [], salesState = {}, coun
         .filter((item) => SIZE_FACETS.has(item?.facet_name))
         .flatMap((item) => Array.isArray(item?.values) ? item.values.map(String) : []);
     if (hasSizeSignal(text) || confirmedSizeValues.length || ['size_fit_help', 'availability', 'pre_purchase_delivery'].includes(subBucket)) {
-        const activeSizeFacet = sizeFacetFor(bucket, rts, discount);
+        const activeSizeFacet = sizeFacetFor(bucket, rts, discount, usaWarehouse);
         const validConfirmedSizes = confirmedSizeValues.filter((value) => catalog[activeSizeFacet].values.includes(value));
         selected.set(activeSizeFacet, hasSizeSignal(query) || !validConfirmedSizes.length ? null : [...new Set(validConfirmedSizes)]);
     }
@@ -194,7 +243,10 @@ const selectActiveFacets = ({ query = '', chatThread = [], salesState = {}, coun
         if (rejectsDiscount && /^discountedProduct/i.test(value)) return false;
         return true;
     });
-    const quickValues = [...new Set([...retainedQuick, ...currentQuick])];
+    const requiredRtsQuick = rts
+        ? [bucket === 'usa' ? 'rtsUsa' : bucket === 'row' ? 'rtsRow' : 'rts']
+        : [];
+    const quickValues = [...new Set([...retainedQuick, ...currentQuick, ...requiredRtsQuick])];
     if (quickValues.length) selected.set('quickFilters_uFilter', quickValues);
     const confirmedShipping = confirmed.get('estimatedDeliveryWeek_uFilter') || [];
     if (!rejectsRts && (hasDeliverySignal(text) || confirmedShipping.length || subBucket === 'pre_purchase_delivery')) {
@@ -204,7 +256,7 @@ const selectActiveFacets = ({ query = '', chatThread = [], salesState = {}, coun
     return {
         facets: selected,
         countryBucket: bucket,
-        mode: rts ? 'rts' : discount ? 'discount' : 'standard'
+        mode: usaWarehouse ? 'usa_warehouse' : rts ? 'rts' : discount ? 'discount' : 'standard'
     };
 };
 

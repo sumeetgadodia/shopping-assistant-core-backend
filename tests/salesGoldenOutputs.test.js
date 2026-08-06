@@ -29,13 +29,13 @@ const cases = [
                 sort_hint: 'fastest_delivery',
                 result_strategy: 'balanced_curated',
                 needs_followup: true,
-                followup_reason: 'lehenga_style'
+                followup_reason: 'recipient'
             },
-            customer_reply: 'I’ll curate ready-to-ship wedding lehengas under ₹50k.',
+            customer_reply: 'I’ll start with women’s ready-to-ship wedding lehengas under ₹50k.',
             followup_question: {
                 ask: true,
-                question: 'Which lehenga style should I show first?',
-                options: ['Bridal lehenga', 'Fish cut lehenga', 'Mirror work lehenga', 'Corset lehenga', 'Pastel lehenga']
+                question: 'Who are you shopping for?',
+                options: ['Women', 'Girls']
             }
         }
     },
@@ -47,7 +47,7 @@ const cases = [
         output: {
             chat_id: 'golden-2',
             filter_decision: {
-                search_ready: true,
+                search_ready: false,
                 primary_intent: 'Light summer wedding outfit',
                 confidence: 'medium',
                 search_term: '',
@@ -101,7 +101,7 @@ const cases = [
         output: {
             chat_id: 'golden-4',
             filter_decision: {
-                search_ready: true,
+                search_ready: false,
                 primary_intent: 'Sale kurtas in XL',
                 confidence: 'high',
                 search_term: '',
@@ -112,15 +112,15 @@ const cases = [
                 ],
                 filters_to_hold_for_later: [],
                 sort_hint: 'price_low_to_high',
-                result_strategy: 'balanced_curated',
+                result_strategy: 'broad_preview',
                 needs_followup: true,
-                followup_reason: 'occasion'
+                followup_reason: 'recipient'
             },
-            customer_reply: 'I’ll narrow this to sale kurtas available in XL.',
+            customer_reply: 'I’ll narrow the sale kurta edit to XL once I know who you’re shopping for.',
             followup_question: {
                 ask: true,
-                question: 'What are you shopping for?',
-                options: ['Wedding', 'Festive', 'Party', 'Work', 'Casual']
+                question: 'Who are you shopping for?',
+                options: ['Women', 'Men', 'Girls', 'Boys']
             }
         }
     }
@@ -138,8 +138,9 @@ for (const item of cases) {
     });
     assert.equal(checked.isValid, true, item.name);
     assert.deepEqual(checked.payload.filter_decision.filters_to_apply, item.output.filter_decision.filters_to_apply, item.name);
+    assert.equal(checked.payload.filter_decision.search_ready, item.output.filter_decision.search_ready, item.name);
     assert.equal(checked.payload.customer_reply, item.output.customer_reply, item.name);
+    assert.deepEqual(checked.payload.followup_question, item.output.followup_question, item.name);
 }
 
 console.log(`sales golden outputs passed (${cases.length} cases)`);
-

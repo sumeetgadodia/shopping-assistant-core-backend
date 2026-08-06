@@ -28,19 +28,21 @@ const PATTERNS = [
     { bucket: 'support', sub_bucket: 'cod_confirmation', re: /\b(confirm(?:ation)? (?:my )?(?:cod|cash on delivery)|(?:cod|cash on delivery) order confirm(?:ation)?|confirm (?:my )?order.*(?:cod|cash on delivery))\b/i },
     { bucket: 'support', sub_bucket: 'cancellation', re: /\b(cancel(?:lation|led|ed)?|cancel my order|do not ship|stop (?:my )?order|placed by mistake)\b/i },
     { bucket: 'support', sub_bucket: 'refund', re: /\b(refund|money back|amount not received|wallet refund|store credit|refund to (?:source|original))\b/i },
-    { bucket: 'support', sub_bucket: 'return_exchange', re: /\b(return|exchange|replace(?:ment)?|reverse pickup|return pickup|return request|exchange request)\b/i },
+    { bucket: 'support', sub_bucket: 'return_exchange', re: /\b(returns?|exchange|replace(?:ment)?|reverse pickup|return pickup|return request|exchange request)\b/i },
     { bucket: 'support', sub_bucket: 'order_modification', re: /\b(change|update|modify|edit|reschedule)\b.{0,30}\b(address|phone|mobile|size|color|colour|order|delivery|measurement|customi[sz]ation)\b/i },
     { bucket: 'support', sub_bucket: 'delivery_delay', re: /\b(delay(?:ed)?|late delivery|not delivered|still not delivered|delivery pending|shipment delayed|stuck in transit|no update|taking too long|urgent delivery|past (?:the )?(?:date|eta))\b/i },
     { bucket: 'support', sub_bucket: 'shipping_courier_issue', re: /\b(courier|awb|delivery attempt|customs|kyc|delivery partner|address serviceability|stuck at customs)\b/i },
     { bucket: 'support', sub_bucket: 'order_status_tracking', re: /\b(where is my order|order status|track(?:ing)?(?: my)? (?:order|shipment)|shipment status|delivery status|when will it (?:ship|arrive|deliver)|dispatch(?:ed)?|in transit|out for delivery|\bwismo\b)\b/i },
     { bucket: 'support', sub_bucket: 'complaint_escalation', re: /\b(complaint|wrong commitment|poor service|bad service|not acceptable|no response|repeated follow.?up|bot not helping)\b/i },
 
-    { bucket: 'sales', sub_bucket: 'recommendation_styling', re: /\b(suggest|recommend|help me choose|what should i wear|styling help|style me|outfit for|options for)\b/i },
+    { bucket: 'sales', sub_bucket: 'purchase_assistance', re: /\b(buy this|purchase this|place (?:the|my|an?) order|add (?:this|it) to (?:bag|cart)|checkout|check out|proceed (?:to|with) purchase)\b/i },
+    { bucket: 'sales', sub_bucket: 'recommendation_styling', re: /\b(suggest|recommend|help me choose|what (?:can|should|would) i wear|which (?:one|option).{0,35}(?:best|suit)|styling help|style me|outfit for|options for|something.{0,30}\bfor|look for|complete (?:this|the) look|match(?:ing)?\b|body type|body shape|pear shaped|petite styling)\b/i },
     { bucket: 'sales', sub_bucket: 'product_search', re: /\b(show|looking for|search(?:ing)? for|want to buy|shop|browse)\b.{0,60}\b(sarees?|lehengas?|kurtas?|gowns?|dresses|dress|blouses?|sherwanis?|jewell?ery|bags?|heels?|footwear|outfits?|collections?)\b/i },
     { bucket: 'sales', sub_bucket: 'size_fit_help', re: /\b(size chart|which size|will this fit|fit help|help with size|body measurement|size\s+(?:xxs|xs|s|m|l|xl|xxl|[3-6]xl|free size))\b/i },
-    { bucket: 'sales', sub_bucket: 'availability', re: /\b(in stock|availability|restock|back in stock|available in (?:size|colou?r))\b/i },
-    { bucket: 'sales', sub_bucket: 'pricing_offer', re: /\b(price|cost|discount|offer|sale|best price|coupon|promo code|affordable|(?:under|below|up to)\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?)\b/i },
-    { bucket: 'sales', sub_bucket: 'pre_purchase_delivery', re: /\b(can i get it by|arrive by|deliver by|delivery timeline|need (?:it )?by|ship by|before .{0,20}(?:date|wedding|event)|ready to ship|rts|urgent delivery)\b/i },
+    { bucket: 'sales', sub_bucket: 'availability', re: /\b(in stock|availability|restock|back in stock|available in (?:size|colou?r)|do you have (?:this|it).{0,30}(?:in|size)|does (?:this|it) come in)\b/i },
+    { bucket: 'sales', sub_bucket: 'pricing_offer', re: /\b(price|cost|discount|offer|sale|best price|coupon|promo code|affordable|cheaper|price range|between\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?|from\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?.{0,20}\bto\b|(?:under|below|up to)\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?)\b/i },
+    { bucket: 'sales', sub_bucket: 'pre_purchase_delivery', re: /\b(can i get it by|can (?:it|this) (?:arrive|reach)|will (?:it|this) (?:arrive|reach)|arrive by|deliver by|delivery timeline|need (?:it )?by|ship by|before .{0,20}(?:date|wedding|event)|ready to ship|rts|urgent delivery)\b/i },
+    { bucket: 'sales', sub_bucket: 'product_search', re: /\b(new arrivals?|latest collection|latest styles?|premium collection|shop new)\b/i },
     { bucket: 'sales', sub_bucket: 'product_search', re: /\b(sarees?|lehengas?|kurtas?|kurta sets?|gowns?|dresses|blouses?|sherwanis?|bandhgalas?|jewell?ery|earrings?|necklaces?|bags?|heels?|footwear|co[- ]?ords?|anarkalis?|shararas?|kaftans?)\b/i },
 
     { bucket: 'account_access', sub_bucket: 'login_otp', re: /\b(login|log in|sign in|signin|otp|password|cannot log)\b/i },
@@ -98,6 +100,7 @@ const chooseDominant = (candidates = [], query = '') => {
     const sales = business.filter((item) => item.bucket === 'sales');
     if (sales.length) {
         const byKind = (kind) => sales.find((item) => item.sub_bucket === kind);
+        if (byKind('purchase_assistance')) return byKind('purchase_assistance');
         if (byKind('recommendation_styling')) return byKind('recommendation_styling');
         if (byKind('product_search') && /\b(show|find|looking for|search(?:ing)? for|want to buy|shop|browse)\b/i.test(query)) return byKind('product_search');
         if (byKind('availability') && /\b(in stock|available|availability|restock|back in stock)\b/i.test(query)) return byKind('availability');
@@ -111,6 +114,22 @@ const chooseDominant = (candidates = [], query = '') => {
     return candidates.find((item) => item.bucket === 'human_assistance') || candidates[0] || { bucket: 'unclear', sub_bucket: 'unclear' };
 };
 
+const normalizedSelection = (value = '') => String(value || '')
+    .toLowerCase().replace(/[₹,]/g, '').replace(/[’']/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
+
+const isSalesContinuation = (query = '', compactContext = {}, candidates = []) => {
+    const salesState = compactContext?.sales_state || {};
+    const hasState = (salesState?.confirmed_filters || []).length > 0 ||
+        !!salesState?.search_term || salesState?.last_followup?.ask === true;
+    if (!hasState) return false;
+    if (candidates.some((item) => ['support', 'general_info', 'account_access', 'human_assistance'].includes(item.bucket))) return false;
+
+    const selected = normalizedSelection(query);
+    const options = (salesState?.last_followup?.options || []).map(normalizedSelection);
+    if (selected && options.includes(selected)) return true;
+    return selected.length > 0 && selected.length <= 60 && /^(?:yes|no|women|men|girls|boys|no preference|show all|any colou?r|no budget limit|no rush|the .+ one|same|same but .+|actually .+|under .+|below .+|between .+|size .+|[xsml]{1,3}|[3-6]xl|.+ colou?r|black|blue|green|red|pink|ivory|gold|silver|wine|maroon)$/i.test(String(query || '').trim());
+};
+
 const inferJourney = (bucket) => ({
     support: 'post_order', sales: 'pre_purchase', general_info: 'information_only',
     account_access: 'information_only', human_assistance: 'unclear',
@@ -121,13 +140,19 @@ const analyzeRouteByRules = (query = '', compactContext = {}) => {
     const candidates = detectRuleCandidates(query);
     const humanRequested = candidates.some((item) => item.bucket === 'human_assistance');
     const realIntents = candidates.filter((item) => !['greeting', 'human_assistance'].includes(item.bucket));
-    const primary = chooseDominant(candidates, query);
+    const continuation = isSalesContinuation(query, compactContext, candidates);
+    const previousSalesSubBucket = ALLOWED.sales.has(compactContext?.sales_state?.last_sub_bucket)
+        ? compactContext.sales_state.last_sub_bucket
+        : 'product_search';
+    const primary = continuation
+        ? { bucket: 'sales', sub_bucket: previousSalesSubBucket }
+        : chooseDominant(candidates, query);
     const contextDependent = /^(yes|no|this one|that one|return it|cancel it|any update|what about this|same one|the black one)[.!?\s]*$/i.test((query || '').trim());
     const uniqueRealIntents = dedupe(realIntents);
     const businessBuckets = new Set(uniqueRealIntents.map((item) => item.bucket));
     const sameSalesBundle = businessBuckets.size === 1 && businessBuckets.has('sales');
     const competing = uniqueRealIntents.length > 1 && !sameSalesBundle;
-    const weak = !candidates.length || contextDependent;
+    const weak = !continuation && (!candidates.length || contextDependent);
     const longFreeForm = (query || '').length > 220;
     const needsLlmCheck = weak || competing || longFreeForm;
 
@@ -147,7 +172,8 @@ const analyzeRouteByRules = (query = '', compactContext = {}) => {
         reason_code: needsLlmCheck ? 'LLM_CHECK' : 'RULE_HIGH_CONFIDENCE',
         needs_llm_check: needsLlmCheck,
         candidates,
-        context_has_active_order: !!compactContext?.has_active_orders
+        context_has_active_order: !!compactContext?.has_active_orders,
+        context_has_active_sales: continuation
     };
 };
 
