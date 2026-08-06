@@ -68,14 +68,16 @@ const callLLM = async (prompt, model, expectJson = true) => {
         console.error(`[LLM Error - ${model}]:`, e.message);
         
         // Return safe fallback objects so the pipeline doesn't crash
-        if (prompt.includes("intent classification layer")) {
+        if (prompt.includes("intent classification layer") || prompt.includes("You route one ecommerce chat turn")) {
             return {
-                primary_bucket: "sales",
-                sub_bucket: "recommendation_styling",
-                journey_stage: "pre_purchase",
-                confidence: 0.6,
-                needs_human_review: false,
-                reason: "Fallback router classification"
+                primary_bucket: "unclear",
+                sub_bucket: "unclear",
+                secondary_intents: [],
+                journey_stage: "unclear",
+                confidence: 0.0,
+                human_requested: false,
+                needs_human_review: true,
+                reason_code: "ROUTER_CALL_FAILED"
             };
         }
         return { 

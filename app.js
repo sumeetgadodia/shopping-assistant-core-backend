@@ -16,6 +16,7 @@ app.listen(config.PORT, () => {
     console.log(`Shopping Assistant API Started`);
     console.log(`Port: ${config.PORT}`);
     console.log(`Router Model: ${config.MODELS.ROUTER}`);
+    console.log(`Light Model: ${config.MODELS.LIGHT}`);
     console.log(`Main Model: ${config.MODELS.MAIN}`);
     console.log(`=================================`);
 });

@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "test": "node tests/routingService.test.js && node tests/promptComposition.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
