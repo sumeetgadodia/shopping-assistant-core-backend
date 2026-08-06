@@ -48,11 +48,18 @@ const normalizeFilters = (rawFilters = [], activeFacetNames = null, errors = [])
         values.forEach((value) => merged.get(facetName).add(value));
     });
 
-    return [...merged.entries()].map(([facetName, values]) => ({
-        filter_name: catalog[facetName].filter_name,
-        facet_name: facetName,
-        values: [...values]
-    }));
+    return [...merged.entries()].map(([facetName, values]) => {
+        let normalizedValues = [...values];
+        if (facetName === 'audience_uFilter' && normalizedValues.length > 1) {
+            normalizedValues = normalizedValues.slice(0, 1);
+            errors.push('multiple_gender_values_reduced');
+        }
+        return {
+            filter_name: catalog[facetName].filter_name,
+            facet_name: facetName,
+            values: normalizedValues
+        };
+    });
 };
 
 const normalizeFollowup = (followup = {}, errors = []) => {
@@ -166,4 +173,3 @@ module.exports = {
     validPriceRange,
     removeDuplicatedQuestion
 };
-

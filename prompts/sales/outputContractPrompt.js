@@ -36,7 +36,10 @@ Contract rules:
 - search_term never contains internal facet names.
 - needs_followup must equal followup_question.ask.
 - If ask=false: question="", options=[], and followup_reason="".
-- If ask=true: question is one short question; options contains 3–5 unique guided options; followup_reason names the one missing dimension.
+- If ask=true: one short question; exactly 2 unique options for binary adult/child recipient, otherwise 3–5; followup_reason names the missing dimension.
+- If recipient is unresolved and materially changes the rack: search_ready=false and do not retrieve products yet.
+- A reversible adult preview requires result_strategy=broad_preview and exactly one adult Gender value.
+- Each result rack contains at most one Gender value. Multiple recipients are handled one rack at a time.
 - customer_reply must not repeat the followup question.
 - When customer_query is empty/unclear: search_ready=false, filters_to_apply=[], search_term="", and ask one guided question.
 - Shipping Time values are strings.
@@ -45,7 +48,7 @@ Final self-check before responding:
 1. Every filter/fact is grounded in runtime input or a confirmed short-answer mapping.
 2. Every facet/value exists in ACTIVE FACET MASTER, except dynamic Price values.
 3. Duplicate facets and values are merged.
-4. No stock, price, discount, delivery, or fit claim lacks runtime evidence.
-5. Only one question appears, inside followup_question.
+4. Gender is omitted when irrelevant and contains no more than one value when used.
+5. No stock, price, discount, delivery, or fit claim lacks runtime evidence.
+6. Only one question appears, inside followup_question.
 `;
-
