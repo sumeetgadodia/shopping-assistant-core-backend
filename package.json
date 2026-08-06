@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "node tests/routingService.test.js && node tests/promptComposition.test.js && node tests/salesPromptComposition.test.js && node tests/salesValidationService.test.js && node tests/salesScenarioMatrix.test.js && node tests/salesGoldenOutputs.test.js"
+    "test": "node tests/routingService.test.js && node tests/promptComposition.test.js && node tests/salesPromptComposition.test.js && node tests/salesValidationService.test.js && node tests/salesScenarioMatrix.test.js && node tests/salesGoldenOutputs.test.js && node tests/salesRecipientRoutingFix.test.js && node tests/salesComplexConversations.test.js && node tests/salesLuxuryStylist.test.js && node tests/salesFacetMasterUpdate.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

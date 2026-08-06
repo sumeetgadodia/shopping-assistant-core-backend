@@ -165,10 +165,12 @@ const compactSalesState = (salesState = {}) => ({
         })),
     search_term: String(salesState?.search_term || '').slice(0, 100),
     answered_dimensions: (Array.isArray(salesState?.answered_dimensions) ? salesState.answered_dimensions : []).slice(0, 20),
+    last_sub_bucket: String(salesState?.last_sub_bucket || '').slice(0, 40),
     last_followup: salesState?.last_followup?.ask === true ? {
         ask: true,
         question: String(salesState.last_followup.question || '').slice(0, 180),
-        options: (Array.isArray(salesState.last_followup.options) ? salesState.last_followup.options : []).slice(0, 5)
+        options: (Array.isArray(salesState.last_followup.options) ? salesState.last_followup.options : []).slice(0, 5),
+        reason: String(salesState.last_followup.reason || '').slice(0, 100)
     } : { ...DEFAULT_FOLLOWUP }
 });
 
@@ -176,6 +178,7 @@ const buildSalesInput = (query, intentData, channelData, context) => ({
     chat_id: channelData.chat_id || '',
     customer_profile_data: compactRuntimeFacts(channelData.customer_profile_data || context?.profile || {}, 2500),
     customer_query: query || '',
+    current_datetime: getCurrentDateTimeISO(),
     sales_state: compactSalesState(channelData.sales_state || {}),
     chat_thread: compactSalesTurns(channelData.chat_thread || []),
     channel_data: {
@@ -194,16 +197,23 @@ const buildSalesInput = (query, intentData, channelData, context) => ({
     }
 });
 
-const buildNextSalesState = (previousState = {}, salesPayload = {}) => {
+const buildNextSalesState = (previousState = {}, salesPayload = {}, query = '', subBucket = 'product_search') => {
     const filters = salesPayload?.filter_decision?.filters_to_apply || [];
     const answered = new Set(Array.isArray(previousState?.answered_dimensions) ? previousState.answered_dimensions : []);
     filters.forEach((filter) => answered.add(filter?.facet_name || filter?.filter_name));
     if (salesPayload?.filter_decision?.search_term) answered.add('search_term');
+    if (previousState?.last_followup?.ask === true && String(query || '').trim()) {
+        answered.add(previousState?.last_followup?.reason || previousState?.last_followup?.question || 'prior_followup');
+    }
     return {
         confirmed_filters: filters,
         search_term: salesPayload?.filter_decision?.search_term || '',
         answered_dimensions: [...answered].filter(Boolean),
-        last_followup: salesPayload?.followup_question || { ...DEFAULT_FOLLOWUP }
+        last_sub_bucket: subBucket,
+        last_followup: salesPayload?.followup_question?.ask === true ? {
+            ...salesPayload.followup_question,
+            reason: salesPayload?.filter_decision?.followup_reason || ''
+        } : { ...DEFAULT_FOLLOWUP }
     };
 };
 
@@ -212,6 +222,7 @@ const buildRouterContext = (channelData = {}) => ({
     active_order_count: (channelData?.active_orders || []).length,
     has_ticket: !!channelData?.freshservice?.ticket_id,
     ticket_status: channelData?.freshservice?.status || '',
+    sales_state: compactSalesState(channelData?.sales_state || {}),
     recent_turns: compactTurns(channelData?.chat_thread || [])
 });
 
@@ -455,7 +466,7 @@ const runPipeline = async (query, userId, channelData = {}) => {
                 filter_decision: finalPayload.filter_decision,
                 filters_to_apply: finalPayload.filter_decision.filters_to_apply,
                 search_term: finalPayload.filter_decision.search_term,
-                next_sales_state: buildNextSalesState(salesInput.sales_state, finalPayload)
+                next_sales_state: buildNextSalesState(salesInput.sales_state, finalPayload, query, intentData.sub_bucket)
             },
             ...(RETURN_RAW_RESPONSE ? { raw_response: { routing: intentData, reply: rawResponse } } : {})
         };
