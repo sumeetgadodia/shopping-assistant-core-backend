@@ -111,8 +111,11 @@ const FAMILY_BANKS = Object.freeze({
 
 const RETAINED_FIRST_BETS = `
 General first-bet guidance:
-- Broad fashion/styling with no recipient: Women may be a reversible broad_preview only when nothing indicates Men, Girls, Boys, kids, gifting, couple, family, or broad wedding-guest intent.
-- Broad wedding/wedding-guest request with no recipient: ask recipient first; if search must run, a Women preview must remain broad and explicitly reversible.
+- The Sales Core recipient gate controls whether to apply, preview, ask, or omit Gender. Product-family banks never override it.
+- Women-first is limited to an explicit women-dominant adult/child family: Women-only broad_preview, then the binary choice.
+- Materially multi-audience products and broad wedding/wedding-guest, gifting, couple, or family requests ask recipient before retrieval.
+- Audience-neutral accessories skip Gender. Never add a gender filter only to increase filter depth.
+- Never combine multiple audiences in one rack. For multiple recipients, ask which one to start with.
 - Women + Wedding: suitable parent racks are Lehengas, Sarees, Gowns, Kurta Sets, Co-Ord Sets.
 - Women + Festive: suitable parent racks are Lehengas, Sarees, Kurta Sets, Co-Ord Sets, with Anarkali Sets or Sharara Sets only as exact subcategories.
 - Cocktail/reception/night: suitable racks include Gowns, Sarees, Dresses, Lehengas, Co-Ord Sets.
