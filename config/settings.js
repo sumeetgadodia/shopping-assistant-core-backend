@@ -5,6 +5,7 @@ module.exports = {
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || "",
     MODELS: {
         ROUTER: process.env.ROUTER_MODEL || "google/gemini-flash-1.5",
+        LIGHT: process.env.LIGHT_CHAT_MODEL || "openai/gpt-4o-mini",
         MAIN: process.env.MAIN_CHAT_MODEL || "openai/gpt-4o-mini",
         FALLBACK: process.env.FALLBACK_MODEL || "openai/gpt-4o"
     }

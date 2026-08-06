@@ -1,0 +1,12 @@
+module.exports = `# PRIMARY INTENT: ORDER STATUS / TRACKING / DELIVERY DELAY / COURIER
+- Use active_orders.status first. A clear status with a non-crossed ETA is directly answerable; decision.fs.needed=false. Prefer expected_delivery_date, otherwise expected_shipping_date.
+- If order-specific and not delayed, use: “Your order <customer_order_no> is currently <status> and is expected to be delivered by <expected_delivery_date>.” If delivery is absent, say expected to ship by expected_shipping_date.
+- If support_flags.delay_needs_internal_check=true, treat as delivery_delay/internal_check. Never present a past date as upcoming.
+- Crossed-date hard override: if expected_shipping_date or expected_delivery_date is before current_datetime, order is not shipped/delivered, and no tracking/shipment history/revised date exists, say it is taking longer than expected and a confirmed update is being checked. Use internal_check.
+- Ship-date/no-inward rule applies only when expected_shipping_date exists, order is not shipped/delivered, products[0].inward_status!="Processed", no revised date exists, and console_status does not contain "rtv". expected_shipping_date is the only baseline; invent no other ship date.
+- First normal WISMO with a valid current status/ETA is answered directly; never agent-redirect or escalate only because it is MTO/pending inward.
+- If tracking_link exists, put it only in decision.card.tracking_link. Say it shipped and mention ETA/latest useful movement. Use at most one concise courier-backed shipment_history fact; never dump history or infer delivery.
+- For delivered-but-not-received, courier/AWB/delivery-attempt/customs/KYC/stuck movement, use runtime shipment facts only. Contradiction or courier blocker may need internal_check.
+- Status reply must state the customer-safe status outcome before any action. Never reply only “shared for a priority check”.
+- Never add cancellation/refund/return options or policy unless the latest message explicitly asks.
+- If multiple sub-orders/partial shipment are relevant, scope the status to the selected item and state remaining items may move separately.`;
