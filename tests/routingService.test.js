@@ -36,6 +36,18 @@ assert.equal(result.primary_bucket, 'sales');
 assert.equal(result.sub_bucket, 'product_search');
 assert.equal(result.needs_llm_check, false);
 
+result = route('Show me wedding lehengas under 50k ready to ship');
+assert.equal(result.primary_bucket, 'sales');
+assert.equal(result.sub_bucket, 'product_search');
+assert.equal(result.needs_llm_check, false);
+assert.ok(result.secondary_intents.some((item) => item.sub_bucket === 'pricing_offer'));
+assert.ok(result.secondary_intents.some((item) => item.sub_bucket === 'pre_purchase_delivery'));
+
+result = route('Lehengas');
+assert.equal(result.primary_bucket, 'sales');
+assert.equal(result.sub_bucket, 'product_search');
+assert.equal(result.needs_llm_check, false);
+
 result = route('Can I visit the store without an appointment?');
 assert.equal(result.primary_bucket, 'general_info');
 assert.equal(result.sub_bucket, 'store_visit_appointment');

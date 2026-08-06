@@ -1,11 +1,12 @@
 const { callLLM } = require('./llmService');
 const { enrichCustomerContext } = require('./dummyData');
-const { validateResponse, validateSupportPayload } = require('./validationService');
+const { validateSupportPayload } = require('./validationService');
+const { validateSalesPayload } = require('./salesValidationService');
 const { analyzeRouteByRules, normalizeRouterResult } = require('./routingService');
 const config = require('../config/settings');
 
 const ROUTER_PROMPT = require('../prompts/routerPrompt');
-const SALES_PROMPT = require('../prompts/salesPrompt');
+const { getSalesPrompt } = require('../prompts/salesPrompt');
 const { getSupportPrompt } = require('../prompts/supportPrompt');
 
 const LOG_CHATS = process.env.LOG_CHATS === 'true';
@@ -109,6 +110,102 @@ const compactTurns = (turns = []) => turns.slice(-4).map((turn) => ({
     message: String(turn?.message || '').slice(0, 500),
     datetime: turn?.datetime || ''
 }));
+
+const compactSalesTurns = (turns = []) => turns.slice(-6).map((turn) => ({
+    from: turn?.from || '',
+    message: String(turn?.message || '').slice(0, 600),
+    datetime: turn?.datetime || ''
+}));
+
+const compactProducts = (products = []) => (Array.isArray(products) ? products : [])
+    .slice(0, 10)
+    .map((product) => ({
+        id: product?.id || product?.pid || '',
+        name: product?.name || product?.product_title || '',
+        designer_name: product?.designer_name || '',
+        price: product?.price ?? '',
+        color: product?.color || '',
+        available_sizes: Array.isArray(product?.available_sizes) ? product.available_sizes.slice(0, 20) : [],
+        stock_status: product?.stock_status || '',
+        estimated_delivery: product?.estimated_delivery || ''
+    }));
+
+const compactRuntimeFacts = (value, maxChars = 5000) => {
+    const budget = { remaining: maxChars };
+    const walk = (item, depth = 0) => {
+        if (budget.remaining <= 0 || depth > 3 || item === null || item === undefined) return undefined;
+        if (typeof item === 'string') {
+            const clipped = item.slice(0, Math.min(600, budget.remaining));
+            budget.remaining -= clipped.length;
+            return clipped;
+        }
+        if (typeof item === 'number' || typeof item === 'boolean') return item;
+        if (Array.isArray(item)) return item.slice(0, 20).map((entry) => walk(entry, depth + 1)).filter((entry) => entry !== undefined);
+        if (typeof item !== 'object') return undefined;
+
+        const output = {};
+        Object.entries(item).slice(0, 30).forEach(([key, entry]) => {
+            if (/base64|binary|image_data|raw_content|html/i.test(key) || budget.remaining <= 0) return;
+            budget.remaining -= key.length;
+            const compacted = walk(entry, depth + 1);
+            if (compacted !== undefined) output[key] = compacted;
+        });
+        return output;
+    };
+    return walk(value) || {};
+};
+
+const compactSalesState = (salesState = {}) => ({
+    confirmed_filters: (Array.isArray(salesState?.confirmed_filters) ? salesState.confirmed_filters : [])
+        .slice(0, 12)
+        .map((filter) => ({
+            filter_name: filter?.filter_name || '',
+            facet_name: filter?.facet_name || '',
+            values: (Array.isArray(filter?.values) ? filter.values : []).slice(0, 20)
+        })),
+    search_term: String(salesState?.search_term || '').slice(0, 100),
+    answered_dimensions: (Array.isArray(salesState?.answered_dimensions) ? salesState.answered_dimensions : []).slice(0, 20),
+    last_followup: salesState?.last_followup?.ask === true ? {
+        ask: true,
+        question: String(salesState.last_followup.question || '').slice(0, 180),
+        options: (Array.isArray(salesState.last_followup.options) ? salesState.last_followup.options : []).slice(0, 5)
+    } : { ...DEFAULT_FOLLOWUP }
+});
+
+const buildSalesInput = (query, intentData, channelData, context) => ({
+    chat_id: channelData.chat_id || '',
+    customer_profile_data: compactRuntimeFacts(channelData.customer_profile_data || context?.profile || {}, 2500),
+    customer_query: query || '',
+    sales_state: compactSalesState(channelData.sales_state || {}),
+    chat_thread: compactSalesTurns(channelData.chat_thread || []),
+    channel_data: {
+        channel: channelData.channel || 'web',
+        country: channelData.country || 'India',
+        browsing_context: compactRuntimeFacts(channelData.browsing_context || {}, 2000),
+        product_context: compactRuntimeFacts(channelData.product_context || {}, 5000),
+        inventory_context: compactRuntimeFacts(channelData.inventory_context || {}, 4000),
+        promotion_context: compactRuntimeFacts(channelData.promotion_context || {}, 3000),
+        product_results: compactProducts(channelData.product_results)
+    },
+    country: channelData.country || context?.profile?.country || 'India',
+    router: {
+        primary: { bucket: 'sales', sub_bucket: intentData.sub_bucket },
+        secondary_intents: intentData.secondary_intents || []
+    }
+});
+
+const buildNextSalesState = (previousState = {}, salesPayload = {}) => {
+    const filters = salesPayload?.filter_decision?.filters_to_apply || [];
+    const answered = new Set(Array.isArray(previousState?.answered_dimensions) ? previousState.answered_dimensions : []);
+    filters.forEach((filter) => answered.add(filter?.facet_name || filter?.filter_name));
+    if (salesPayload?.filter_decision?.search_term) answered.add('search_term');
+    return {
+        confirmed_filters: filters,
+        search_term: salesPayload?.filter_decision?.search_term || '',
+        answered_dimensions: [...answered].filter(Boolean),
+        last_followup: salesPayload?.followup_question || { ...DEFAULT_FOLLOWUP }
+    };
+};
 
 const buildRouterContext = (channelData = {}) => ({
     has_active_orders: (channelData?.active_orders || []).length > 0,
@@ -313,36 +410,52 @@ const runPipeline = async (query, userId, channelData = {}) => {
 
     const context = enrichCustomerContext(userId, normalizedChannelData);
     if (intentData.primary_bucket === 'sales') {
-        const salesInput = {
+        const salesInput = buildSalesInput(query, intentData, normalizedChannelData, context);
+        const composed = getSalesPrompt({
+            subBucket: intentData.sub_bucket,
+            query,
+            chatThread: salesInput.chat_thread,
+            salesState: salesInput.sales_state,
+            country: salesInput.country
+        });
+        const rawResponse = await callLLM(`${composed.prompt}\n\n# RUNTIME INPUT\n${JSON.stringify(salesInput)}`, config.MODELS.MAIN);
+        const checked = validateSalesPayload(rawResponse, {
+            chatId,
+            activeFacetNames: composed.diagnostics.active_facets
+        });
+        const finalPayload = checked.payload || {
             chat_id: chatId,
-            customer_profile_data: context?.profile || {},
-            customer_query: query || '',
-            chat_thread: normalizedChannelData.chat_thread,
-            channel_data: normalizedChannelData,
-            country: normalizedChannelData.country || context?.profile?.country || 'India',
-            router: {
-                primary: { bucket: 'sales', sub_bucket: intentData.sub_bucket },
-                secondary_intents: intentData.secondary_intents || []
+            filter_decision: {
+                search_ready: false, primary_intent: '', confidence: 'low', search_term: '',
+                filters_to_apply: [], filters_to_hold_for_later: [], sort_hint: 'relevance',
+                result_strategy: 'broad_preview', needs_followup: true, followup_reason: 'product_rack'
+            },
+            customer_reply: 'I couldn’t safely prepare those recommendations yet.',
+            followup_question: {
+                ask: true, question: 'What would you like to shop for?',
+                options: ['Lehengas', 'Sarees', 'Gowns', 'Kurta Sets', 'Jewellery']
             }
         };
-        const rawResponse = await callLLM(`${SALES_PROMPT}\n\n# Runtime input\n${JSON.stringify(salesInput)}`, config.MODELS.MAIN);
-        const reply = rawResponse?.customer_reply || rawResponse?.reply_text || rawResponse?.reply || '';
-        const validation = validateResponse({ reply_text: reply }, 'sales');
         return {
             chat_id: chatId,
-            reply: validation.isValid ? validation.safeReply : 'I couldn’t safely prepare those recommendations. Could you share the category you want?',
+            reply: finalPayload.customer_reply,
             bot_type: 'sales',
             decision_status: 'resolved',
             agent_review_required: false,
-            followup_question: normalizeFollowup(rawResponse?.followup_question),
+            followup_question: normalizeFollowup(finalPayload.followup_question),
             metadata: {
                 intent: 'sales', sub_bucket: intentData.sub_bucket,
                 secondary_intents: intentData.secondary_intents || [],
-                confidence: intentData.confidence, validated: validation.isValid,
+                confidence: intentData.confidence, validated: checked.isValid,
+                validation_errors: checked.errors || [],
+                validation_corrections: checked.corrections || [],
                 routing_source: routingSource,
-                filter_decision: rawResponse?.filter_decision || null,
-                filters_to_apply: rawResponse?.filter_decision?.filters_to_apply || [],
-                search_term: rawResponse?.filter_decision?.search_term || ''
+                loaded_prompt_modules: composed.modules,
+                prompt_diagnostics: composed.diagnostics,
+                filter_decision: finalPayload.filter_decision,
+                filters_to_apply: finalPayload.filter_decision.filters_to_apply,
+                search_term: finalPayload.filter_decision.search_term,
+                next_sales_state: buildNextSalesState(salesInput.sales_state, finalPayload)
             },
             ...(RETURN_RAW_RESPONSE ? { raw_response: { routing: intentData, reply: rawResponse } } : {})
         };

@@ -37,10 +37,11 @@ const PATTERNS = [
 
     { bucket: 'sales', sub_bucket: 'recommendation_styling', re: /\b(suggest|recommend|help me choose|what should i wear|styling help|style me|outfit for|options for)\b/i },
     { bucket: 'sales', sub_bucket: 'product_search', re: /\b(show|looking for|search(?:ing)? for|want to buy|shop|browse)\b.{0,60}\b(sarees?|lehengas?|kurtas?|gowns?|dresses|dress|blouses?|sherwanis?|jewell?ery|bags?|heels?|footwear|outfits?|collections?)\b/i },
-    { bucket: 'sales', sub_bucket: 'size_fit_help', re: /\b(size chart|which size|will this fit|fit help|help with size|body measurement)\b/i },
+    { bucket: 'sales', sub_bucket: 'size_fit_help', re: /\b(size chart|which size|will this fit|fit help|help with size|body measurement|size\s+(?:xxs|xs|s|m|l|xl|xxl|[3-6]xl|free size))\b/i },
     { bucket: 'sales', sub_bucket: 'availability', re: /\b(in stock|availability|restock|back in stock|available in (?:size|colou?r))\b/i },
-    { bucket: 'sales', sub_bucket: 'pricing_offer', re: /\b(price|cost|discount|offer|sale|best price|coupon|promo code)\b/i },
-    { bucket: 'sales', sub_bucket: 'pre_purchase_delivery', re: /\b(can i get it by|deliver by|delivery timeline|need it by|ship by|before .{0,20}(?:date|wedding|event))\b/i },
+    { bucket: 'sales', sub_bucket: 'pricing_offer', re: /\b(price|cost|discount|offer|sale|best price|coupon|promo code|affordable|(?:under|below|up to)\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?)\b/i },
+    { bucket: 'sales', sub_bucket: 'pre_purchase_delivery', re: /\b(can i get it by|arrive by|deliver by|delivery timeline|need (?:it )?by|ship by|before .{0,20}(?:date|wedding|event)|ready to ship|rts|urgent delivery)\b/i },
+    { bucket: 'sales', sub_bucket: 'product_search', re: /\b(sarees?|lehengas?|kurtas?|kurta sets?|gowns?|dresses|blouses?|sherwanis?|bandhgalas?|jewell?ery|earrings?|necklaces?|bags?|heels?|footwear|co[- ]?ords?|anarkalis?|shararas?|kaftans?)\b/i },
 
     { bucket: 'account_access', sub_bucket: 'login_otp', re: /\b(login|log in|sign in|signin|otp|password|cannot log)\b/i },
     { bucket: 'account_access', sub_bucket: 'wishlist_order_history', re: /\b(wishlist|order history)\b/i },
@@ -94,6 +95,18 @@ const chooseDominant = (candidates = [], query = '') => {
             (a, b) => SUPPORT_PRIORITY.indexOf(a.sub_bucket) - SUPPORT_PRIORITY.indexOf(b.sub_bucket)
         )[0];
     }
+    const sales = business.filter((item) => item.bucket === 'sales');
+    if (sales.length) {
+        const byKind = (kind) => sales.find((item) => item.sub_bucket === kind);
+        if (byKind('recommendation_styling')) return byKind('recommendation_styling');
+        if (byKind('product_search') && /\b(show|find|looking for|search(?:ing)? for|want to buy|shop|browse)\b/i.test(query)) return byKind('product_search');
+        if (byKind('availability') && /\b(in stock|available|availability|restock|back in stock)\b/i.test(query)) return byKind('availability');
+        if (byKind('size_fit_help') && /\b(which size|will this fit|fit help|size chart|measurements?)\b/i.test(query)) return byKind('size_fit_help');
+        if (byKind('pre_purchase_delivery') && /\b(arrive|deliver|delivery|need (?:it )?by|ship by|ready to ship|rts|urgent)\b/i.test(query)) return byKind('pre_purchase_delivery');
+        if (byKind('product_search')) return byKind('product_search');
+        if (byKind('pricing_offer')) return byKind('pricing_offer');
+        return sales[0];
+    }
     if (business.length) return business[0];
     return candidates.find((item) => item.bucket === 'human_assistance') || candidates[0] || { bucket: 'unclear', sub_bucket: 'unclear' };
 };
@@ -110,7 +123,10 @@ const analyzeRouteByRules = (query = '', compactContext = {}) => {
     const realIntents = candidates.filter((item) => !['greeting', 'human_assistance'].includes(item.bucket));
     const primary = chooseDominant(candidates, query);
     const contextDependent = /^(yes|no|this one|that one|return it|cancel it|any update|what about this|same one|the black one)[.!?\s]*$/i.test((query || '').trim());
-    const competing = dedupe(realIntents).length > 1;
+    const uniqueRealIntents = dedupe(realIntents);
+    const businessBuckets = new Set(uniqueRealIntents.map((item) => item.bucket));
+    const sameSalesBundle = businessBuckets.size === 1 && businessBuckets.has('sales');
+    const competing = uniqueRealIntents.length > 1 && !sameSalesBundle;
     const weak = !candidates.length || contextDependent;
     const longFreeForm = (query || '').length > 220;
     const needsLlmCheck = weak || competing || longFreeForm;
