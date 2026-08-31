@@ -1,0 +1,59 @@
+{
+  "info": {
+    "name": "Support guest and policy QA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [{
+    "listen": "prerequest",
+    "script": {
+      "type": "text/javascript",
+      "exec": [
+        "const iso = (hours) => new Date(Date.now() + hours * 3600000).toISOString();",
+        "pm.variables.set(\"qa_future_ship\", iso(120));",
+        "pm.variables.set(\"qa_future_delivery\", iso(240));"
+      ]
+    }
+  }],
+  "item": [
+    {
+      "name": "Guest tracking — unverified, request secure verification",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_guest_001\",\"message\":\"Track my guest order\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\",\"account_context\":{\"guest\":true,\"verified\":false},\"active_orders\":[],\"chat_thread\":[],\"freshservice\":{\"ticket_id\":\"\",\"status\":\"\",\"threads\":[]}}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Guest tracking — verified dummy order",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_guest_002\",\"message\":\"Where is my order QA-GUEST-1001?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\",\"account_context\":{\"guest\":true,\"verified\":true},\"active_orders\":[{\"order_id\":\"QA1001\",\"sub_order_id\":\"QA-SUB-1001\",\"customer_order_no\":\"QA-GUEST-1001\",\"product_title\":\"QA Test Saree\",\"designer_name\":\"QA Test Designer\",\"status\":\"Processing\",\"expected_shipping_date\":\"{{qa_future_ship}}\",\"expected_delivery_date\":\"{{qa_future_delivery}}\",\"tracking_link\":\"\",\"products\":[{\"name\":\"QA Test Saree\",\"image_url\":\"https://static3.azafashions.com/sample.jpg\",\"stock_type\":\"MTO\",\"inward_status\":\"Pending\"}]}],\"chat_thread\":[],\"freshservice\":{\"ticket_id\":\"\",\"status\":\"\",\"threads\":[]}}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Guest return process",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_guest_003\",\"message\":\"How do I return an order placed as a guest?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\",\"account_context\":{\"guest\":true,\"verified\":false},\"active_orders\":[],\"chat_thread\":[],\"freshservice\":{\"ticket_id\":\"\",\"status\":\"\",\"threads\":[]}}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Guest checkout FAQ",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_001\",\"message\":\"Can I checkout as a guest?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Cancellation policy — within 24 hours",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_002\",\"message\":\"What happens if I cancel within 24 hours?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Return window and charges — India",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_003\",\"message\":\"What is the India return window and handling charge?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Payment methods FAQ",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_004\",\"message\":\"Which payment methods do you accept?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "International duty FAQ — neutral checkout answer",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_005\",\"message\":\"Will I pay customs duty for a US delivery?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"USA\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Privacy deletion FAQ",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_006\",\"message\":\"How can I delete my personal data?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    },
+    {
+      "name": "Alteration FAQ — not sales pricing",
+      "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"chat_id\":\"qa_policy_007\",\"message\":\"Does Aza offer alterations?\",\"user_id\":\"guest\",\"channel_data\":{\"channel\":\"web\",\"country\":\"India\"}}"},"url":{"raw":"http://localhost:5001/api/chat","protocol":"http","host":["localhost"],"port":"5001","path":["api","chat"]}}
+    }
+  ]
+}

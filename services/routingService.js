@@ -1,3 +1,5 @@
+const catalog = require('../prompts/sales/catalogMaster');
+
 const ALLOWED = {
     support: new Set([
         'order_status_tracking', 'delivery_delay', 'cancellation',
@@ -22,26 +24,27 @@ const ALLOWED = {
 };
 
 const PATTERNS = [
-    { bucket: 'support', sub_bucket: 'wrong_missing_item', re: /\b(wrong item|wrong product|missing item|missing piece|missing part|missing accessory|incomplete (order|shipment)|only one item|item not received)\b/i },
-    { bucket: 'support', sub_bucket: 'product_issue', re: /\b(damaged|defective|quality issue|fabric issue|broken|torn|stain(?:ed)?|not as shown|wrong size received)\b/i },
-    { bucket: 'support', sub_bucket: 'payment_issue', re: /\b(payment failed|amount (?:was )?(?:deducted|debited)|charged twice|double charged|payment not received|payment issue|payment confirmation|payment successful|\butr\b|transaction id)\b/i },
+    { bucket: 'support', sub_bucket: 'wrong_missing_item', re: /\b(wrong item|wrong product|missing item|missing piece|missing part|missing accessory|incomplete (?:order|shipment)|only one item|item not received|(?:item|piece|part|accessory|blouse|dupatta|belt).{0,24}\bmissing)\b/i },
+    { bucket: 'support', sub_bucket: 'product_issue', re: /\b(damaged|defective|quality issue|fabric issue|broken|torn|stain(?:ed)?|not as shown|wrong size received|received (?:the )?wrong size)\b/i },
+    { bucket: 'support', sub_bucket: 'payment_issue', re: /\b(payment failed|amount (?:was )?(?:deducted|debited)|charged twice|double charged|payment not received|payment issue|payment confirmation|payment successful|paid but (?:no|the) order|no order (?:was )?(?:created|placed)|\butr\b|transaction id)\b/i },
     { bucket: 'support', sub_bucket: 'cod_confirmation', re: /\b(confirm(?:ation)? (?:my )?(?:cod|cash on delivery)|(?:cod|cash on delivery) order confirm(?:ation)?|confirm (?:my )?order.*(?:cod|cash on delivery))\b/i },
-    { bucket: 'support', sub_bucket: 'cancellation', re: /\b(cancel(?:lation|led|ed)?|cancel my order|do not ship|stop (?:my )?order|placed by mistake)\b/i },
-    { bucket: 'support', sub_bucket: 'refund', re: /\b(refund|money back|amount not received|wallet refund|store credit|refund to (?:source|original))\b/i },
+    { bucket: 'support', sub_bucket: 'cancellation', re: /\b(cancel(?:lation|led|ed)?|cancel my order|do not ship|stop (?:my )?order|placed by mistake|reject(?:ed|ing)? (?:the )?delivery|return to origin|\brto\b)\b/i },
+    { bucket: 'support', sub_bucket: 'refund', re: /\b(refund|money back|amount not received|wallet refund|store credit|refund to (?:source|original)|return (?:was )?picked up.{0,40}(?:money|amount)|where is my money)\b/i },
     { bucket: 'support', sub_bucket: 'return_exchange', re: /\b(returns?|exchange|replace(?:ment)?|reverse pickup|return pickup|return request|exchange request)\b/i },
     { bucket: 'support', sub_bucket: 'order_modification', re: /\b(change|update|modify|edit|reschedule)\b.{0,30}\b(address|phone|mobile|size|color|colour|order|delivery|measurement|customi[sz]ation)\b/i },
-    { bucket: 'support', sub_bucket: 'delivery_delay', re: /\b(delay(?:ed)?|late delivery|not delivered|still not delivered|delivery pending|shipment delayed|stuck in transit|no update|taking too long|urgent delivery|past (?:the )?(?:date|eta))\b/i },
-    { bucket: 'support', sub_bucket: 'shipping_courier_issue', re: /\b(courier|awb|delivery attempt|customs|kyc|delivery partner|address serviceability|stuck at customs)\b/i },
-    { bucket: 'support', sub_bucket: 'order_status_tracking', re: /\b(where is my order|order status|track(?:ing)?(?: my)? (?:order|shipment)|shipment status|delivery status|when will it (?:ship|arrive|deliver)|dispatch(?:ed)?|in transit|out for delivery|\bwismo\b)\b/i },
+    { bucket: 'support', sub_bucket: 'delivery_delay', re: /\b(delay(?:ed)?|late delivery|not delivered|still not delivered|delivery pending|shipment delayed|stuck in transit|no update|taking too long|urgent delivery|past (?:the )?(?:date|eta)|delivered.{0,20}(?:not receive|not got|didn.t receive))\b/i },
+    { bucket: 'support', sub_bucket: 'shipping_courier_issue', re: /\b(courier|delivery attempt|customs (?:hold|clearance|delay|issue)|kyc|delivery partner|address serviceability|stuck at customs)\b/i },
+    { bucket: 'support', sub_bucket: 'order_status_tracking', re: /\b(where is my order|order status|track(?:ing)?(?: my)? (?:guest )?(?:order|shipment)|track (?:with|using) (?:an )?awb|shipment status|delivery status|when will it (?:ship|arrive|deliver)|dispatch(?:ed)?|in transit|out for delivery|order (?:was |is )?placed successfully|order confirmation|\bwismo\b)\b/i },
     { bucket: 'support', sub_bucket: 'complaint_escalation', re: /\b(complaint|wrong commitment|poor service|bad service|not acceptable|no response|repeated follow.?up|bot not helping)\b/i },
 
-    { bucket: 'sales', sub_bucket: 'purchase_assistance', re: /\b(buy this|purchase this|place (?:the|my|an?) order|add (?:this|it) to (?:bag|cart)|checkout|check out|proceed (?:to|with) purchase)\b/i },
+    { bucket: 'sales', sub_bucket: 'purchase_assistance', re: /\b(buy this|purchase this|place (?:the|my|an?) order|add (?:this|it|the (?:first|second|third|fourth|\d+(?:st|nd|rd|th)) one) to (?:bag|cart)|add the (?:first|second|third|fourth|\d+(?:st|nd|rd|th)) one to (?:bag|cart)|checkout|check out|proceed (?:to|with) purchase)\b/i },
     { bucket: 'sales', sub_bucket: 'recommendation_styling', re: /\b(suggest|recommend|help me choose|what (?:can|should|would) i wear|which (?:one|option).{0,35}(?:best|suit)|styling help|style me|outfit for|options for|something.{0,30}\bfor|look for|complete (?:this|the) look|match(?:ing)?\b|body type|body shape|pear shaped|petite styling)\b/i },
+    { bucket: 'sales', sub_bucket: 'recommendation_styling', re: /\b(?:need|want|looking for|show me)\b.{0,70}\b(?:wedding|sangeet|reception|engagement|mehendi|haldi|cocktail|party|festive)\b.{0,40}\b(?:outfit|look|something|options?)\b|\b(?:wedding|sangeet|reception|engagement|mehendi|haldi|cocktail|party|festive)\b.{0,40}\b(?:outfit|look|something|options?)\b/i },
     { bucket: 'sales', sub_bucket: 'product_search', re: /\b(show|looking for|search(?:ing)? for|want to buy|shop|browse)\b.{0,60}\b(sarees?|lehengas?|kurtas?|gowns?|dresses|dress|blouses?|sherwanis?|jewell?ery|bags?|heels?|footwear|outfits?|collections?)\b/i },
     { bucket: 'sales', sub_bucket: 'size_fit_help', re: /\b(size chart|which size|will this fit|fit help|help with size|body measurement|size\s+(?:xxs|xs|s|m|l|xl|xxl|[3-6]xl|free size))\b/i },
-    { bucket: 'sales', sub_bucket: 'availability', re: /\b(in stock|availability|restock|back in stock|available in (?:size|colou?r)|do you have (?:this|it).{0,30}(?:in|size)|does (?:this|it) come in)\b/i },
+    { bucket: 'sales', sub_bucket: 'availability', re: /\b(in stock|sold out|out of stock|availability|restock|back in stock|(?:this|that|it|the (?:first|second|third|fourth|blue|black|red|green|pink|gold) one) (?:is|available)|is (?:this|that|it|the (?:first|second|third|fourth|blue|black|red|green|pink|gold) one) available|available in (?:size|colou?r)|do you have (?:this|it|that|the .+ one).{0,30}(?:in|size)|do you have .{0,25}\b(?:in\s+)?(?:size\s+)?(?:xxs|xs|s|m|l|xl|xxl|[3-6]xl)\b|does (?:this|it|that) come in)\b/i },
     { bucket: 'sales', sub_bucket: 'pricing_offer', re: /\b(price|cost|discount|offer|sale|best price|coupon|promo code|affordable|cheaper|price range|between\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?|from\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?.{0,20}\bto\b|(?:under|below|up to)\s+(?:₹|rs\.?|inr)?\s*\d+(?:\.\d+)?\s*(?:k|l|lakh|lac)?)\b/i },
-    { bucket: 'sales', sub_bucket: 'pre_purchase_delivery', re: /\b(can i get it by|can (?:it|this) (?:arrive|reach)|will (?:it|this) (?:arrive|reach)|arrive by|deliver by|delivery timeline|need (?:it )?by|ship by|before .{0,20}(?:date|wedding|event)|ready to ship|rts|urgent delivery)\b/i },
+    { bucket: 'sales', sub_bucket: 'pre_purchase_delivery', re: /\b(can i get it by|can (?:it|this) (?:arrive|reach)|will (?:it|this) (?:arrive|reach)|arrive by|deliver by|delivery timeline|need (?:it )?(?:by|before)\s+(?:today|tomorrow|this|next|mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?|\d)|ship by|before .{0,20}(?:date|wedding|event)|ready to ship|rts|urgent delivery|next day delivery)\b/i },
     { bucket: 'sales', sub_bucket: 'product_search', re: /\b(new arrivals?|latest collection|latest styles?|premium collection|shop new)\b/i },
     { bucket: 'sales', sub_bucket: 'product_search', re: /\b(sarees?|lehengas?|kurtas?|kurta sets?|gowns?|dresses|blouses?|sherwanis?|bandhgalas?|jewell?ery|earrings?|necklaces?|bags?|heels?|footwear|co[- ]?ords?|anarkalis?|shararas?|kaftans?)\b/i },
 
@@ -50,9 +53,9 @@ const PATTERNS = [
     { bucket: 'account_access', sub_bucket: 'profile_account', re: /\b(profile|saved address|account (?:issue|update))\b/i },
 
     { bucket: 'general_info', sub_bucket: 'store_visit_appointment', re: /\b(visit (?:the )?store|store appointment|appointment.*store)\b/i },
-    { bucket: 'general_info', sub_bucket: 'store_contact_info', re: /\b(store location|store address|store timing|store hours|contact number|phone number|email (?:id|address)|customer care number)\b/i },
-    { bucket: 'general_info', sub_bucket: 'policy_query', re: /\b(policy|terms and conditions)\b/i },
-    { bucket: 'general_info', sub_bucket: 'shipping_payment_info', re: /\b(shipping method|payment method|cash on delivery|\bcod\b|international shipping)\b/i },
+    { bucket: 'general_info', sub_bucket: 'store_contact_info', re: /\b(store location|nearest store|find (?:a|the|your) store|store address|store timings?|store hours|contact number|phone number|email (?:id|address)|customer care number)\b/i },
+    { bucket: 'general_info', sub_bucket: 'policy_query', re: /\b(policy|terms and conditions|checkout as (?:a )?guest|guest checkout|alterations?|delete my (?:personal )?(?:data|information)|retain my (?:data|information)|hold my (?:data|information)|opt out of marketing|unsubscribe from (?:email|emails|marketing)|website colou?rs?.{0,30}(?:accurate|match|exact)|colou?rs? shown.{0,30}(?:accurate|match|exact))\b/i },
+    { bucket: 'general_info', sub_bucket: 'shipping_payment_info', re: /\b(shipping methods?|payment methods?|cash on delivery|\bcod\b|international shipping|ship (?:outside|internationally|worldwide)|shipping cost|shipping charge|customs dut(?:y|ies)|import dut(?:y|ies)|items? insured|shipping insurance|how long.{0,35}(?:ship|shipping)|delivery after dispatch)\b/i },
     { bucket: 'general_info', sub_bucket: 'brand_designer_info', re: /\b(brand info|designer info|authentic|about aza|how aza works)\b/i },
 
     { bucket: 'human_assistance', sub_bucket: 'human_assistance', re: /\b(human|agent|manager|customer care|support (?:person|executive)|talk to someone|speak (?:to|with) someone|call me|call ?back|escalate)\b/i },
@@ -76,10 +79,43 @@ const dedupe = (items = []) => {
     });
 };
 
-const detectRuleCandidates = (query = '') => dedupe(
-    PATTERNS.filter((item) => item.re.test(query || ''))
-        .map(({ bucket, sub_bucket }) => ({ bucket, sub_bucket }))
-);
+const CATALOG_ROUTE_FACETS = [
+    'designerName_uFilter', 'level2CategoryName_uFilter', 'level3CategoryNames_uFilter',
+    'baseColor_uFilter', 'attrTypeOfWork_uFilter', 'baseFabricMaterial_uFilter',
+    'classificationTag_uFilter'
+];
+const AMBIGUOUS_CATALOG_ROUTE_VALUES = new Set([
+    'yes', 'no', 'open', 'work', 'three', 'love', 'gold', 'lace', 'zari', 'plain',
+    'black', 'white', 'red', 'blue', 'green', 'pink', 'yellow', 'silver', 'beige'
+]);
+const normalizeCatalogText = (value = '') => String(value || '').toLowerCase()
+    .replace(/&/g, ' and ').replace(/[’']/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim();
+const catalogRouteValues = CATALOG_ROUTE_FACETS.flatMap((facetName) => (
+    catalog[facetName]?.values || []
+)).map((value) => ({ value, key: normalizeCatalogText(value) }))
+    .filter(({ key }) => key.length >= 3 && !AMBIGUOUS_CATALOG_ROUTE_VALUES.has(key))
+    .sort((a, b) => b.key.length - a.key.length);
+const exactSalesFacetValues = new Set(CATALOG_ROUTE_FACETS.flatMap((facetName) => catalog[facetName]?.values || [])
+    .map(normalizeCatalogText).filter((key) => key.length >= 3 && !['yes', 'no', 'open', 'work', 'love', 'three'].includes(key)));
+const PRODUCT_ROUTE_ALIASES = /\b(pre[- ]?draped saree|corset(?: lehenga| gown)?|skirt sets?|cape sets?|pant sets?|jumpsuits?|anarkalis?|shararas?|ghararas?|kaftans?|indo[- ]?western|co[- ]?ords?|salwar suits?)\b/i;
+
+const hasCatalogSalesSignal = (query = '') => {
+    const key = normalizeCatalogText(query);
+    if (!key) return false;
+    if (PRODUCT_ROUTE_ALIASES.test(query)) return true;
+    if (exactSalesFacetValues.has(key)) return true;
+    const padded = ` ${key} `;
+    return catalogRouteValues.some(({ key: valueKey }) => padded.includes(` ${valueKey} `));
+};
+
+const detectRuleCandidates = (query = '') => {
+    const candidates = PATTERNS.filter((item) => item.re.test(query || ''))
+        .map(({ bucket, sub_bucket }) => ({ bucket, sub_bucket }));
+    if (hasCatalogSalesSignal(query)) candidates.push({ bucket: 'sales', sub_bucket: 'product_search' });
+    return dedupe(candidates);
+};
+
+const INFORMATION_ONLY_OVERRIDE = /\b(checkout as (?:a )?guest|guest checkout|payment methods?|shipping cost|shipping charge|customs dut(?:y|ies)|import dut(?:y|ies)|items? insured|shipping insurance|alterations?|delete my (?:personal )?(?:data|information)|retain my (?:data|information)|hold my (?:data|information)|opt out of marketing|unsubscribe from (?:email|emails|marketing)|website colou?rs?.{0,30}(?:accurate|match|exact)|colou?rs? shown.{0,30}(?:accurate|match|exact))\b/i;
 
 const chooseDominant = (candidates = [], query = '') => {
     const business = candidates.filter((item) => !['greeting', 'human_assistance'].includes(item.bucket));
@@ -96,6 +132,10 @@ const chooseDominant = (candidates = [], query = '') => {
         return [...support].sort(
             (a, b) => SUPPORT_PRIORITY.indexOf(a.sub_bucket) - SUPPORT_PRIORITY.indexOf(b.sub_bucket)
         )[0];
+    }
+    if (INFORMATION_ONLY_OVERRIDE.test(query)) {
+        const information = business.find((item) => item.bucket === 'general_info');
+        if (information) return information;
     }
     const sales = business.filter((item) => item.bucket === 'sales');
     if (sales.length) {
@@ -127,7 +167,7 @@ const isSalesContinuation = (query = '', compactContext = {}, candidates = []) =
     const selected = normalizedSelection(query);
     const options = (salesState?.last_followup?.options || []).map(normalizedSelection);
     if (selected && options.includes(selected)) return true;
-    return selected.length > 0 && selected.length <= 60 && /^(?:yes|no|women|men|girls|boys|no preference|show all|any colou?r|no budget limit|no rush|the .+ one|same|same but .+|actually .+|under .+|below .+|between .+|size .+|[xsml]{1,3}|[3-6]xl|.+ colou?r|black|blue|green|red|pink|ivory|gold|silver|wine|maroon)$/i.test(String(query || '').trim());
+    return selected.length > 0 && selected.length <= 80 && /^(?:yes|no|women|men|girls|boys|no preference|show all|any colou?r|no budget limit|no rush|no more questions?.*|stop asking.*|just show me.*|let me browse.*|skip the questions?.*|the .+ one|same|same but .+|actually .+|under .+|below .+|between .+|size .+|[xsml]{1,3}|[3-6]xl|.+ colou?r|black|blue|green|red|pink|ivory|gold|silver|wine|maroon)$/i.test(String(query || '').trim());
 };
 
 const inferJourney = (bucket) => ({
@@ -144,15 +184,18 @@ const analyzeRouteByRules = (query = '', compactContext = {}) => {
     const previousSalesSubBucket = ALLOWED.sales.has(compactContext?.sales_state?.last_sub_bucket)
         ? compactContext.sales_state.last_sub_bucket
         : 'product_search';
+    const activeOrderUpdate = /^(?:any update|update|status)[.!?\s]*$/i.test((query || '').trim()) && compactContext?.has_active_orders;
     const primary = continuation
         ? { bucket: 'sales', sub_bucket: previousSalesSubBucket }
+        : activeOrderUpdate
+            ? { bucket: 'support', sub_bucket: 'order_status_tracking' }
         : chooseDominant(candidates, query);
     const contextDependent = /^(yes|no|this one|that one|return it|cancel it|any update|what about this|same one|the black one)[.!?\s]*$/i.test((query || '').trim());
     const uniqueRealIntents = dedupe(realIntents);
     const businessBuckets = new Set(uniqueRealIntents.map((item) => item.bucket));
     const sameSalesBundle = businessBuckets.size === 1 && businessBuckets.has('sales');
     const competing = uniqueRealIntents.length > 1 && !sameSalesBundle;
-    const weak = !continuation && (!candidates.length || contextDependent);
+    const weak = !continuation && !activeOrderUpdate && (!candidates.length || contextDependent);
     const longFreeForm = (query || '').length > 220;
     const needsLlmCheck = weak || competing || longFreeForm;
 

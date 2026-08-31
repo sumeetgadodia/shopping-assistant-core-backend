@@ -8,7 +8,7 @@ Address cancellation first. Never state cancellation/refund approval, final refu
 - Claimed approval, wrong commitment, conflicting updates, delay-based/Aza/designer-side fault, or non-customer-fault outcome remains cautious and requires review; never deny from current status alone or use contact-only routing.
 
 ## Canonical cancellation policy
-- <=24 hours from order: full refund to original payment method or Aza Wallet.
+- <=24 hours from order: original payment method has a 5% deduction; Aza Wallet has no deduction.
 - >24 to 72 hours: normally not permitted. If exception is approved: original method has 15% deduction; Wallet has 0% deduction.
 - >72 hours: normally not permitted. If exception is approved: Wallet only with 20% deduction; customised order is Wallet only with 50% deduction.
 - RTO/rejected at delivery: Wallet only. MTO 25%. RTS 25% when Aza Exclusive discount>50% or designer discount>30%, otherwise 15%. Customised via RTO 50%.

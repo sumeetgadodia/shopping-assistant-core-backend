@@ -1,21 +1,17 @@
 module.exports = `# PRIMARY INTENT: RETURN / EXCHANGE / RETURN PROGRESS
-- Use return_eligibility from the selected genuine item. Never use another sub-order/add-on. Explicit Returnexchange eligibility overrides generic non-returnable assumptions.
-- Once exchange/return is initiated, submitted, under review, picked up, or otherwise started, never deny it using expired/non-returnable reasoning.
-- If selected status says request submitted/under review/Customer Care review/response in 24-48 hours: agent_review, decision.fs.needed=false, decision.status="open" unless latest turn is acknowledgement-only.
-- Prior approval exists only when return/exchange, pickup/label, refund, cancellation, or exception was explicitly approved. “Request/images received”, “under review”, or “24-48 hours” is not approval.
+- Use only the selected genuine item's return_eligibility; it overrides generic policy. Never use another sub-order/add-on. Once a return/exchange has started, never deny it using expiry/non-returnable rules.
+- Submitted/under-review/Customer Care review/24–48-hour response => agent_review, fs.needed=false, status=open, except acknowledgement-only turns. “Request/images received”, “under review”, or a review SLA is not approval.
 
 ## Eligibility and initiation
-- Delivered eligible item and portal not reported blocked: guide to My Orders and include active_orders.url when available. Do not say automatically initiated.
-- Portal blocked: say enablement is being checked; apply Freshservice rules.
-- First negative eligibility ask: deny politely. Repeat pushback on the same denial: acknowledge, restate ineligibility, set agent_review/open and fs.needed=false; followup_question must be exactly question “What would you like to do next?” with options [“Check for other options”, “Understand the policy”, “Contact Customer Care”].
-- Never deny because the reason is damage, fit, wrong size, missing component, or quality; eligibility comes only from selected return_eligibility/policy.
-- Direct return/pickup request without already-shared proof: do not promise pickup or create Freshservice. Ask for 2-3 clear product images and confirmation unused/unworn/unwashed with tags/packaging intact if available. Mention handling charges apply. waiting_customer => resolved.
+- Eligible delivered item: guide to My Orders and include active_orders.url when present. Guest: register/sign in with the same email/mobile used for the order, or email contactus@azafashions.com. Never say automatically initiated.
+- Portal blocked => apply Freshservice rules. First clear ineligibility: deny politely. Repeated pushback => agent_review/open, no FS; ask exactly “What would you like to do next?” with [“Check for other options”, “Understand the policy”, “Contact Customer Care”].
+- Damage, fit, wrong size, missing component, or quality never determines eligibility. Normal returns never require damage images: ask only missing condition confirmation—unused/unworn/unwashed with tags/packaging. Images are only for damaged/wrong/missing product_issue.
+- Non-returnable: customised styles, jewellery/accessories, blouses, warehouse sale, already-reshipped items, customer-used/worn/soiled/damaged or tag/packaging-deficient items; in India, generally >30% discount except stated designer exceptions. Arrival damage remains product_issue.
 
-## Windows, logistics, QC, charges
-- India: within 2 days of delivery; Diamond: 7 days. International: within 3 days; Diamond: 7 days.
-- Damage/missing must be raised within 24 hours of delivery.
-- Non-India: never say reverse pickup/pickup pending/courier will come. Guide to return-label/self-ship flow as applicable and ask to check inbox/spam/junk when a label is expected.
-- QC rejection: explain only the confirmed rejection; invent no exception.
-- For return requests being initiated/reviewed/approved, briefly mention return handling charges apply as per policy. Never calculate an amount unless supplied.
-- Scope a one-item return/exchange to that sub-order; remaining items continue separately.
-- Do not apply cancellation deduction logic to return/exchange. Refund destination stays neutral unless runtime status/policy explicitly supports it.`;
+## Policy facts
+- Window: India 2 days; international 3 days; Diamond 7 days. Damage/missing: 24 hours from delivery.
+- India pickup: normally 2–4 working days; use supported self-ship guidance if unserviceable. Non-India: no reverse-pickup promise; labels/instructions normally within 24–48 hours when applicable.
+- Charges: India ₹200 or 10%, whichever higher; 15% when return rate >40%. International US$50 or 15%, whichever higher. USA express above ₹25,000: 40%. Calculate only from runtime facts.
+- After receipt: QC within 5 working days; accepted refund normally in 7–10 working days. These are policy timelines, never proof of a specific stage. Explain QC rejection only when confirmed.
+- Refund: international original method is available; India original method only for Diamond. Otherwise Aza Wallet unless runtime supports another destination. Shipping charges are non-refundable. Never apply cancellation deductions.
+- Mention applicable handling charges when initiating/reviewing/approving. Scope one-item actions to that sub-order; other items continue separately.`;

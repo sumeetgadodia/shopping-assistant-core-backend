@@ -53,6 +53,22 @@ const AMBIGUOUS_DESIGNERS = new Set([
     'mati', 'ilk', 'ease', 'begum', 'advait', 'roqa', 'prata', 'kalp', 'domani'
 ]);
 
+const VALUE_ALIASES = Object.freeze({
+    level2CategoryName_uFilter: [
+        [/\b(?:gown|gowns)\b/i, 'Gowns'], [/\b(?:dress|dresses)\b/i, 'Dresses'],
+        [/\b(?:lehenga|lehenga choli|lehngas?|lehangas?)\b/i, 'Lehengas'], [/\b(?:saree|sari|sarees|saris)\b/i, 'Sarees'],
+        [/\bkurta sets?\b/i, 'Kurta Sets'], [/\bkurtas?\b/i, 'Kurtas'], [/\bjumpsuits?\b/i, 'Jumpsuits'],
+        [/\bpant sets?\b/i, 'Pant Sets'], [/\bco[- ]?ord sets?\b/i, 'Co-ord Sets'], [/\bsherwanis?\b/i, 'Sherwanis'],
+        [/\bbandhgalas?\b/i, 'Bandhgalas'], [/\b(?:bags?|clutches?|potlis?|batwas?)\b/i, 'Bags'],
+        [/\b(?:footwear|heels?|flats?|juttis?|shoes?)\b/i, 'Footwear']
+    ],
+    level3CategoryNames_uFilter: [
+        [/\bpre[- ]?draped sarees?\b/i, 'Pre-Draped Sarees'], [/\banarkali sets?\b|\banarkalis?\b/i, 'Anarkali Sets'],
+        [/\bsharara sets?\b|\bshararas?\b/i, 'Sharara Sets'], [/\bkaftan dresses?\b/i, 'Kaftan Dresses'],
+        [/\bkaftan sets?\b/i, 'Kaftan Sets'], [/\bpotlis?\b|\bbatwas?\b/i, 'Potlis/Batwas'], [/\bclutches?\b/i, 'Clutches']
+    ]
+});
+
 const normalize = (value = '') => String(value)
     .toLowerCase()
     .replace(/&/g, ' and ')
@@ -68,6 +84,29 @@ const combinedText = ({ query = '', chatThread = [], salesState = {} } = {}) => 
         .map((turn) => `${turn?.from || ''}: ${turn?.message || ''}`);
     const stateText = [salesState?.search_term || '', salesState?.last_followup?.question || ''];
     return [query, ...turns, ...stateText].join('\n');
+};
+
+const isNegatedOccurrence = (paddedText, start) => {
+    const prefix = paddedText.slice(Math.max(0, start - 38), start);
+    return /\b(?:no|not|without|except|excluding|exclude|avoid|rather than|instead of)(?:\s+for)?\s+(?:a |an |the )?$/i.test(prefix);
+};
+
+const facetContextAllows = (facetName, key, text) => {
+    const normalized = normalize(text);
+    if (facetName === 'attrNeckline_uFilter' && ['yes', 'no'].includes(key)) return false;
+    if (facetName === 'attrNeckline_uFilter' && key === 'open') {
+        return /\b(?:front open|open front|open neck|open neckline|open (?:sherwani|kurta|jacket|blouse|gown|dress|shirt|coat))\b/i.test(text);
+    }
+    if (facetName === 'shopByOccassion_uFilter' && key === 'work') {
+        return /\b(?:for work|workwear|work wear|office|corporate)\b/i.test(text);
+    }
+    if (facetName === 'baseFabricMaterial_uFilter' && ['gold', 'zari', 'lace'].includes(key)) {
+        return new RegExp(`\\b(?:${key})\\s+(?:fabric|material|textile)\\b|\\b(?:fabric|material|made of|woven in)\\s+(?:${key})\\b`, 'i').test(text);
+    }
+    if (facetName === 'attrTypeOfWork_uFilter' && key === 'gold') return /\bgold (?:work|embroidery|zari)\b/i.test(text);
+    if (facetName === 'attrTypeOfWork_uFilter' && key === 'lace') return /\blace (?:work|embroidery|applique)\b/i.test(text);
+    if (facetName === 'baseColor_uFilter' && ['zari', 'lace'].includes(key)) return false;
+    return !!normalized;
 };
 
 const matchedValues = (facetName, text) => {
@@ -95,10 +134,11 @@ const matchedValues = (facetName, text) => {
             spans.push([start + 1, start + needle.length - 1]);
             start = paddedText.indexOf(needle, start + 1);
         }
-        const independentSpans = spans.filter(([spanStart, spanEnd]) => !selectedSpans.some(
+        const independentSpans = spans.filter(([spanStart, spanEnd]) => !isNegatedOccurrence(paddedText, spanStart) && !selectedSpans.some(
             ([selectedStart, selectedEnd]) => spanStart >= selectedStart && spanEnd <= selectedEnd
         ));
         if (!independentSpans.length) continue;
+        if (!facetContextAllows(facetName, key, text)) continue;
 
         seen.add(key);
         selectedSpans.push(...independentSpans);
@@ -106,7 +146,18 @@ const matchedValues = (facetName, text) => {
         if (matches.length >= limit) break;
     }
 
-    return matches;
+    (VALUE_ALIASES[facetName] || []).forEach(([re, value]) => {
+        if (matches.includes(value) || !catalog[facetName].values.includes(value)) return;
+        const found = String(text || '').match(re);
+        if (!found) return;
+        const normalizedFull = ` ${normalize(text)} `;
+        const normalizedMatch = normalize(found[0]);
+        const start = normalizedFull.indexOf(` ${normalizedMatch} `) + 1;
+        if (start > 0 && isNegatedOccurrence(normalizedFull, start)) return;
+        matches.unshift(value);
+    });
+
+    return [...new Set(matches)].slice(0, limit);
 };
 
 const countryBucket = (country = '') => {
@@ -296,6 +347,10 @@ const getSalesPrompt = ({
         diagnostics: {
             prompt_chars: prompt.length,
             active_facets: [...selection.facets.keys()],
+            active_facet_values: Object.fromEntries(
+                [...selection.facets.entries()]
+                    .filter(([, values]) => Array.isArray(values) && values.length)
+            ),
             country_bucket: selection.countryBucket,
             size_mode: selection.mode,
             family_banks: knowledge.familyKeys,

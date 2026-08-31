@@ -27,7 +27,10 @@ const payload = {
     followup_question: { ask: false, question: 'unused', options: ['unused'] }
 };
 
-const checked = validateSupportPayload(payload, { chatId: 'runtime-id', subBucket: 'delivery_delay', activeOrders: [], freshservice: {} });
+const checked = validateSupportPayload(payload, {
+    chatId: 'runtime-id', subBucket: 'delivery_delay', freshservice: {},
+    activeOrders: [{ customer_order_no: 'A1', sub_order_id: 'S1', tracking_link: 'https://track.test/A1', products: [] }]
+});
 assert.equal(checked.isValid, true);
 assert.equal(checked.payload.chat_id, 'runtime-id');
 assert.equal(checked.payload.decision.status, 'resolved');
