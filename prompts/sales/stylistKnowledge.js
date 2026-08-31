@@ -127,6 +127,8 @@ const REFINEMENT_BANKS = Object.freeze({
     wedding_budget: ['Under ₹50k', '₹50k–₹1L', '₹1L–₹2L', 'No budget limit'],
     comfort: ['Light and easy', 'Glam and statement', 'Easy to dance in', 'Modest coverage', 'No preference'],
     delivery: ['Ready to ship', 'Within 1 week', 'Within 2 weeks', 'No rush'],
+    bag_type: ['Potlis', 'Clutches', 'Handbags', 'Totes', 'Show all'],
+    bag_detail: ['Palette', 'Craft', 'Size', 'Carry style', 'No preference'],
     lehenga_color: ['Pink', 'Ivory', 'Red', 'Gold/Green', 'No preference'],
     saree_color: ['Red', 'Gold', 'Pink/Ivory', 'Green', 'No preference'],
     gown_color: ['Black', 'Red', 'Pink', 'Gold/Ivory', 'No preference']
@@ -206,6 +208,10 @@ const selectRefinementBanks = (text = '', familyKeys = [], salesState = {}) => {
     if (familyKeys.includes('lehenga')) add('lehenga_color', 'color', 'colour', 'palette');
     else if (familyKeys.includes('saree')) add('saree_color', 'color', 'colour', 'palette');
     else if (familyKeys.includes('gown')) add('gown_color', 'color', 'colour', 'palette');
+    if (familyKeys.includes('bags')) {
+        add('bag_type', 'product_type', 'bag_type');
+        if (isAnswered('bag_type', 'product_type')) add('bag_detail', 'bag_detail', 'palette', 'craft');
+    }
     if (/\b(urgent|ready to ship|rts|deliver|delivery|need .* by|within .*week|tomorrow|asap)\b/i.test(text)) {
         add('delivery', 'delivery_timeline', 'shipping_time');
     }

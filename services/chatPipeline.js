@@ -1,7 +1,7 @@
 const { callLLM } = require('./llmService');
 const { enrichCustomerContext } = require('./dummyData');
 const { validateSupportPayload } = require('./validationService');
-const { validateSalesPayload } = require('./salesValidationService');
+const { validateSalesPayload, validateProductRack } = require('./salesValidationService');
 const { analyzeRouteByRules, normalizeRouterResult } = require('./routingService');
 const config = require('../config/settings');
 
@@ -15,12 +15,16 @@ const RETURN_RAW_RESPONSE = process.env.RETURN_RAW_RESPONSE === 'true';
 const SUPPORT_CONTACT = {
     whatsapp: '+91 8291990059',
     india_call: '02242792123, Mon-Fri, 10 AM-10 PM IST',
+    usa_call: '+12132135273, Mon-Fri, 12:30 AM-12:30 PM EDT',
     international_call: '+12132135273, Mon-Fri, 10 AM-10 PM IST',
     email: 'contactus@azafashions.com'
 };
 
-const SUPPORT_CONTACT_REPLY =
-    'You can reach our team on WhatsApp at +91 8291990059, call 02242792123 in India or +12132135273 internationally (Mon-Fri, 10 AM-10 PM IST), or email contactus@azafashions.com.';
+const getSupportContactReply = (country = '') => {
+    const isUSA = /^(?:usa|us|united states|united states of america)$/i.test(String(country || '').trim());
+    const internationalHours = isUSA ? '12:30 AM–12:30 PM EDT' : '10 AM–10 PM IST';
+    return `You can WhatsApp +91 8291990059, call 02242792123 in India (Mon–Fri, 10 AM–10 PM IST), call +12132135273 internationally (Mon–Fri, ${internationalHours}), or email contactus@azafashions.com.`;
+};
 
 const DEFAULT_FOLLOWUP = { ask: false, question: '', options: [] };
 const DEFAULT_ORDER_CARD = {
@@ -324,15 +328,17 @@ const silentResult = (chatId, intentData) => ({
     }
 });
 
-const safeSupportFallback = (chatId, bucket, hasOrders) => ({
+const safeSupportFallback = (chatId, bucket, hasOrders, needsGuestVerification = false) => ({
     chat_id: chatId,
     decision: {
-        status: 'open', team: 'Customer Care',
+        status: needsGuestVerification ? 'resolved' : 'open', team: needsGuestVerification ? '' : 'Customer Care',
         order: { order_no: '', sub_id: '' },
         card: { ...DEFAULT_ORDER_CARD },
         fs: { needed: false, ticket_id: '', reason: '', msg: '' }
     },
-    customer_reply: bucket === 'general_info'
+    customer_reply: needsGuestVerification
+        ? 'Please verify the order using the registered email or mobile number before I share its details.'
+        : bucket === 'general_info'
         ? 'I couldn’t verify that information safely. Please contact Customer Care for confirmation.'
         : bucket === 'account_access'
             ? 'I couldn’t verify the account action safely. Customer Care can help you complete it.'
@@ -401,7 +407,7 @@ const runPipeline = async (query, userId, channelData = {}) => {
     if (intentData.primary_bucket === 'human_assistance') {
         return {
             chat_id: chatId,
-            reply: SUPPORT_CONTACT_REPLY,
+            reply: getSupportContactReply(normalizedChannelData.country),
             bot_type: 'support',
             decision_status: 'resolved',
             agent_review_required: false,
@@ -432,8 +438,21 @@ const runPipeline = async (query, userId, channelData = {}) => {
         const rawResponse = await callLLM(`${composed.prompt}\n\n# RUNTIME INPUT\n${JSON.stringify(salesInput)}`, config.MODELS.MAIN);
         const checked = validateSalesPayload(rawResponse, {
             chatId,
-            activeFacetNames: composed.diagnostics.active_facets
+            activeFacetNames: composed.diagnostics.active_facets,
+            activeFacetValues: composed.diagnostics.active_facet_values,
+            query,
+            subBucket: intentData.sub_bucket,
+            salesState: salesInput.sales_state,
+            productContext: salesInput.channel_data.product_context,
+            productResults: salesInput.channel_data.product_results,
+            customerMeasurements: salesInput.channel_data.customer_measurements,
+            actionResult: salesInput.channel_data.action_result,
+            cartResult: salesInput.channel_data.cart_result
         });
+        const rackIntegrity = validateProductRack(
+            salesInput.channel_data.product_results,
+            checked.payload?.filter_decision?.filters_to_apply || []
+        );
         const finalPayload = checked.payload || {
             chat_id: chatId,
             filter_decision: {
@@ -466,6 +485,11 @@ const runPipeline = async (query, userId, channelData = {}) => {
                 filter_decision: finalPayload.filter_decision,
                 filters_to_apply: finalPayload.filter_decision.filters_to_apply,
                 search_term: finalPayload.filter_decision.search_term,
+                rack_integrity: {
+                    valid: rackIntegrity.isValid,
+                    rejected_count: rackIntegrity.rejected.length,
+                    rejected_reasons: [...new Set(rackIntegrity.rejected.flatMap((item) => item.reasons))]
+                },
                 next_sales_state: buildNextSalesState(salesInput.sales_state, finalPayload, query, intentData.sub_bucket)
             },
             ...(RETURN_RAW_RESPONSE ? { raw_response: { routing: intentData, reply: rawResponse } } : {})
@@ -484,7 +508,11 @@ const runPipeline = async (query, userId, channelData = {}) => {
     let checked = validateSupportPayload(rawResponse, {
         chatId, subBucket: intentData.sub_bucket,
         activeOrders: normalizedChannelData.active_orders,
-        freshservice: normalizedChannelData.freshservice
+        freshservice: normalizedChannelData.freshservice,
+        query,
+        actionResult: normalizedChannelData.action_result || {},
+        isGuest: !userId || userId === 'guest' || normalizedChannelData.account_context?.guest === true,
+        accountVerified: normalizedChannelData.account_context?.verified === true
     });
 
     if (!checked.isValid) {
@@ -493,13 +521,24 @@ const runPipeline = async (query, userId, channelData = {}) => {
         checked = validateSupportPayload(rawResponse, {
             chatId, subBucket: intentData.sub_bucket,
             activeOrders: normalizedChannelData.active_orders,
-            freshservice: normalizedChannelData.freshservice
+            freshservice: normalizedChannelData.freshservice,
+            query,
+            actionResult: normalizedChannelData.action_result || {},
+            isGuest: !userId || userId === 'guest' || normalizedChannelData.account_context?.guest === true,
+            accountVerified: normalizedChannelData.account_context?.verified === true
         });
     }
 
     const finalPayload = checked.isValid
         ? checked.payload
-        : safeSupportFallback(chatId, intentData.primary_bucket, normalizedChannelData.active_orders.length > 0);
+        : safeSupportFallback(
+            chatId,
+            intentData.primary_bucket,
+            normalizedChannelData.active_orders.length > 0,
+            normalizedChannelData.active_orders.length > 0 &&
+                (!userId || userId === 'guest' || normalizedChannelData.account_context?.guest === true) &&
+                normalizedChannelData.account_context?.verified !== true
+        );
     const decision = finalPayload.decision;
     const fs = decision.fs;
     const agentReviewRequired = decision.status === 'open';

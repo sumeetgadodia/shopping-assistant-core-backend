@@ -39,4 +39,6 @@ Return JSON only, exactly this shape and no extra keys:
 9. fs.needed=true reply contains only customer-safe status/check/update-on-confirmation and never internal team wording.
 10. fs.needed=true requires team Customer Care/Warehouse/Merchandise. If an applicable route is truly unclear, Customer Care; do not use this fallback over explicit MTO/RTS routing.
 11. Product issue without proof => fs.needed=false, resolved, ask only missing proof. Proof already supplied => acknowledge and review; never promise approval/processing unless confirmed.
-12. Before output, compress customer_reply to 1-2 short sentences: status/outcome + next step only.`;
+12. A guest without runtime_context.account_context.verified=true receives no order/card/status disclosure. Ask for secure verification; never expose data from Order ID alone.
+13. Never claim refund/return/pickup approval or completion, delivery date, payment confirmation, order modification, ticket creation, or contact action without matching runtime evidence.
+14. Before output, compress customer_reply to 1-2 short sentences: status/outcome + next step only.`;
